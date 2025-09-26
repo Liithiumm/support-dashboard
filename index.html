@@ -1427,6 +1427,49 @@ try{
   }catch(e){}
 })();
 </script>
+<!-- === Privacy Mask (blur overlay when not admin) === -->
+<style>
+#privacyMask{
+  position:fixed; inset:0;
+  display:none; align-items:center; justify-content:center;
+  z-index:9999;
+  background:rgba(2,6,23,.35);
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+}
+#privacyMask.show{ display:flex; }
+#privacyMask .mask-card{
+  padding:18px 22px; border-radius:16px;
+  background:rgba(0,0,0,.55);
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 10px 30px rgba(0,0,0,.45);
+  color:#e6f0ff; text-align:center; font-weight:600;
+}
+#privacyMask .mask-note{
+  opacity:.8; font-weight:500; font-size:12px; margin-top:6px;
+}
+</style>
 
+<div id="privacyMask" aria-hidden="true">
+  <div class="mask-card">
+    🔒 Contenu masqué — connectez-vous (Admin)
+    <div class="mask-note">Les onglets restent verrouillés tant que vous n’êtes pas connecté.</div>
+  </div>
+</div>
+
+<script>
+function togglePrivacyMask(){
+  const mask = document.getElementById('privacyMask');
+  if(!mask) return;
+  const isAdmin = sessionStorage.getItem('is_admin') === '1';
+  mask.classList.toggle('show', !isAdmin);
+}
+
+// Vérifie à chaque chargement
+document.addEventListener('DOMContentLoaded', togglePrivacyMask);
+
+// Vérifie aussi à chaque changement du storage
+window.addEventListener('storage', togglePrivacyMask);
+</script>
 </body>
 </html>
