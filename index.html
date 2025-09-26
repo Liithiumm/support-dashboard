@@ -6,7 +6,7 @@
 <title>Support • Neon Glass PRO — Sheets Overlay</title>
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600&display=swap" rel="stylesheet">
 
-<!-- Anti-flash: bascule la classe admin/non-admin AVANT paint -->
+<!-- Anti-flash: bascule admin/non-admin avant paint -->
 <script>
 (function(){
   try{
@@ -19,7 +19,7 @@
 </script>
 
 <style>
-/* ===== Neon Glass PRO responsive + i18n (v19 Pro) ===== */
+/* ===== Neon Glass PRO responsive + i18n (v19.2) ===== */
 :root{
   --bg0:#050a12; --bg1:#0b1728;
   --ink:#eaf4ff; --muted:#9bb5cb; --muted-strong:#cfe4ff;
@@ -35,7 +35,6 @@
   --sheet-bg: rgba(10,18,30,.78);
   --sheet-blur: blur(12px) saturate(140%);
 }
-
 *,*::before,*::after{ box-sizing:border-box }
 html,body{ width:100%; height:100% }
 html{ background:var(--bg0) }
@@ -52,22 +51,34 @@ body{
 /* Anti-flash + masque flou */
 .noadmin .app{ filter: blur(10px) saturate(115%); pointer-events:none; user-select:none }
 .auth .app{ filter:none; pointer-events:auto }
+
+/* === Privacy Mask (flou + bouton login) === */
 #privacyMask{
-  position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
-  z-index:9999; background:rgba(2,6,23,.35); backdrop-filter: blur(10px) saturate(120%);
+  position:fixed; inset:0;
+  display:none; align-items:center; justify-content:center;
+  z-index:9999;
+  background:rgba(2,6,23,.35);
+  backdrop-filter: blur(10px) saturate(120%);
   -webkit-backdrop-filter: blur(10px) saturate(120%);
 }
-.auth #privacyMask{ display:none }
+#privacyMask.show{ display:flex; }
 #privacyMask .mask-card{
   padding:18px 22px; border-radius:16px;
-  background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.12);
-  box-shadow:0 10px 30px rgba(0,0,0,.45); color:#e6f0ff; text-align:center; font-weight:700;
+  background:rgba(0,0,0,.55);
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 10px 30px rgba(0,0,0,.45);
+  color:#e6f0ff; text-align:center; font-weight:700;
 }
+#privacyMask .mask-note{
+  opacity:.85; font-weight:500; font-size:12px; margin-top:8px;
+}
+/* s’assure que le bouton est cliquable */
+#privacyMask .btn{ pointer-events:auto; }
 
 /* App shell */
 .app{ min-height:100dvh; display:grid; grid-template-rows:auto 1fr auto; }
 
-/* ===== Header ===== */
+/* Header */
 .header{
   position: sticky; top:0; z-index:10;
   padding: 16px clamp(14px,4vw,22px);
@@ -85,224 +96,111 @@ body{
 }
 h1{ margin:0; font-size: clamp(18px, 2.2vw, 26px); letter-spacing:.3px; text-shadow:0 0 18px rgba(30,200,255,.35) }
 
-/* ===== Main container ===== */
-.container{
-  width:100%;
-  max-width: min(1100px, 94vw);
-  margin:0 auto;
-  padding: 14px clamp(14px,4vw,22px) 90px;
-}
+/* Container + cards */
+.container{ width:100%; max-width:min(1100px, 94vw); margin:0 auto; padding: 14px clamp(14px,4vw,22px) 90px; }
 .card{
-  position:relative; overflow:hidden;
-  border-radius: var(--radius);
+  position:relative; overflow:hidden; border-radius: var(--radius);
   background: linear-gradient(180deg, var(--panel-1), var(--panel-2));
-  border:1px solid var(--border-outer);
-  box-shadow: var(--shadow-lg);
-  padding:16px;
+  border:1px solid var(--border-outer); box-shadow: var(--shadow-lg); padding:16px;
 }
-.card::before{
-  content:""; position:absolute; inset:0; pointer-events:none; border-radius:inherit;
-  box-shadow: inset 0 0 0 1px var(--border-inner), inset 0 1px 24px rgba(30,200,255,.08);
-}
-.card::after{
-  content:""; position:absolute; left:0; right:0; top:0; height:46%;
-  background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,0) 60%);
-  pointer-events:none;
-}
-.noise{
-  position:absolute; inset:0; pointer-events:none; border-radius:inherit; opacity:.08; mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='.35'/></svg>");
+.card::before{ content:""; position:absolute; inset:0; pointer-events:none; border-radius:inherit; box-shadow: inset 0 0 0 1px var(--border-inner), inset 0 1px 24px rgba(30,200,255,.08); }
+.card::after{ content:""; position:absolute; left:0; right:0; top:0; height:46%; background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,0) 60%); pointer-events:none; }
+.noise{ position:absolute; inset:0; pointer-events:none; border-radius:inherit; opacity:.08; mix-blend-mode: overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='.35'/></svg>");
 }
 
-/* Buttons & inputs */
+/* Inputs & buttons */
 input, select, textarea{
-  width:100%; border-radius:12px;
-  background: rgba(7,16,26,.82);
-  border:1px solid #1f3a56; color:var(--ink);
-  padding:10px 12px; box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+  width:100%; border-radius:12px; background: rgba(7,16,26,.82);
+  border:1px solid #1f3a56; color:var(--ink); padding:10px 12px; box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
 }
 textarea{ min-height:70px }
-input:focus, select:focus, textarea:focus{
-  outline:none; border-color:#2a79a6;
-  box-shadow: 0 0 0 2px rgba(30,200,255,.22);
-}
+input:focus, select:focus, textarea:focus{ outline:none; border-color:#2a79a6; box-shadow:0 0 0 2px rgba(30,200,255,.22) }
 .btn{
   display:inline-flex; align-items:center; justify-content:center; gap:8px;
   padding:10px 16px; border-radius:999px; border:0; cursor:pointer;
   font-weight:800; line-height:1; color:#03121a;
   background: linear-gradient(180deg, #b9efff, #59d4ff);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.65), var(--shadow-sm);
-  transition: transform .08s ease, filter .15s ease, box-shadow .15s ease;
 }
-.btn:active{ transform: translateY(1px) }
-.btn.gray{
-  background:#2b3446; color:#eaf4ff;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), var(--shadow-sm);
-}
+.btn.gray{ background:#2b3446; color:#eaf4ff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), var(--shadow-sm); }
 .btn.small{ padding:8px 12px; font-size:13px }
 .actions{ display:flex; gap:8px; flex-wrap:wrap }
-a.btn{ text-decoration:none !important }
+a.btn{ text-decoration:none }
 
-/* Base list */
+/* RO list */
 .member-ro{
   display:grid; grid-template-columns: 1fr auto auto; gap:8px;
   border:1px solid rgba(120,200,255,.28); border-radius:12px; padding:10px;
   background: linear-gradient(180deg, rgba(16,28,44,.58), rgba(10,22,36,.62));
-  box-shadow: var(--shadow-sm); align-items:center;
-  margin-bottom:8px;
+  box-shadow: var(--shadow-sm); align-items:center; margin-bottom:8px;
 }
 .member-ro .tag{ font-weight:900; letter-spacing:.2px }
 .member-ro .role{ color:var(--muted-strong); font-size:clamp(12px, 1.2vw, 13px) }
 .member-ro .tickets-badge{
   min-width:56px; text-align:center; font-weight:900; border-radius:999px; padding:6px 10px;
-  background:linear-gradient(90deg, #e7f5ff, #cfe9ff, #e7f5ff);
-  color:#0c1a2a; border:1px solid rgba(120,200,255,.45);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
-  background-size: 200% 100%;
-  animation: badgeGlow 3.2s linear infinite;
+  background:linear-gradient(90deg, #e7f5ff, #cfe9ff, #e7f5ff); color:#0c1a2a; border:1px solid rgba(120,200,255,.45);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.7); background-size:200% 100%; animation: badgeGlow 3.2s linear infinite;
 }
-@keyframes badgeGlow{
-  0%{ background-position: 0% 50% }
-  50%{ background-position: 100% 50% }
-  100%{ background-position: 0% 50% }
-}
+@keyframes badgeGlow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
 .member-ro .status{ min-width:66px; text-align:center; font-weight:900 }
 .status.ok{ color:#24e3b5 } .status.low{ color:#ff9c9c } .status.neutral{ color:#8eb5cf }
 
-/* Bottom Tab bar */
-.tabbar{
-  position: fixed; bottom: 0; left:0; right:0; z-index:40;
-  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-  background: linear-gradient(180deg, rgba(6,12,20,.15), rgba(6,12,20,.7));
-  border-top: 1px solid rgba(120,200,255,.2);
-  backdrop-filter: blur(8px) saturate(120%);
-}
-.tabs{
-  max-width:1000px; margin:0 auto;
-  display:flex; justify-content:center; align-items:center; gap:12px;
-  width:fit-content;
-}
-.tab{ min-width:120px;
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  gap:6px; padding:10px 8px; border-radius:12px; cursor:pointer;
-  color:#cfe9ff; font-size:12px;
-  background: linear-gradient(180deg, rgba(14,24,38,.35), rgba(10,20,34,.5));
-  border:1px solid rgba(120,200,255,.26);
-  box-shadow: var(--shadow-sm);
-  transition: filter .12s ease, transform .18s cubic-bezier(.2,.8,.2,1), box-shadow .15s ease;
-  text-align:center;
-}
-.tab.active{ filter: brightness(1.08); box-shadow: var(--shadow-md); transform: translateY(-2px) }
+/* Tabs */
+.tabbar{ position:fixed; bottom:0; left:0; right:0; z-index:40; padding:10px 12px calc(10px + env(safe-area-inset-bottom)); background: linear-gradient(180deg, rgba(6,12,20,.15), rgba(6,12,20,.7)); border-top:1px solid rgba(120,200,255,.2); backdrop-filter: blur(8px) saturate(120%); }
+.tabs{ max-width:1000px; margin:0 auto; display:flex; justify-content:center; align-items:center; gap:12px; width:fit-content }
+.tab{ min-width:120px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:10px 8px; border-radius:12px; cursor:pointer; color:#cfe9ff; font-size:12px; background: linear-gradient(180deg, rgba(14,24,38,.35), rgba(10,20,34,.5)); border:1px solid rgba(120,200,255,.26); box-shadow: var(--shadow-sm); transition: filter .12s, transform .18s cubic-bezier(.2,.8,.2,1), box-shadow .15s; text-align:center }
+.tab.active{ filter:brightness(1.08); box-shadow: var(--shadow-md); transform: translateY(-2px) }
 .tab .ic{ font-size:18px }
 
-/* Overlay Backdrop + Bottom Sheets */
-.backdrop{
-  position: fixed; inset:0; z-index:30; display:none;
-  background: radial-gradient(1200px 600px at 50% -10%, rgba(30,200,255,.10), transparent 60%),
-              linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,.65));
-  transition: opacity .22s ease; opacity:0;
-}
+/* Sheets */
+.backdrop{ position:fixed; inset:0; z-index:30; display:none; background: radial-gradient(1200px 600px at 50% -10%, rgba(30,200,255,.10), transparent 60%), linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,.65)); transition: opacity .22s; opacity:0 }
 .backdrop.show{ display:block; opacity:1 }
+.sheet{ position:fixed; inset:0; z-index:50; transform:translateY(100%); transition: transform .55s cubic-bezier(.18,.88,.18,1); will-change: transform; display:block }
+.sheet.open{ transform:translateY(0) }
+.sheet .sheet-inner{ height:100dvh; margin:0 auto; max-width:1000px; background:var(--sheet-bg); backdrop-filter:var(--sheet-blur); border:1px solid rgba(120,200,255,.22); border-radius:0; box-shadow:none; padding:14px; overflow:auto }
+.sheet .handle{ width:54px; height:5px; border-radius:999px; margin:6px auto 12px; background: linear-gradient(180deg, #cfe9ff, #9bd4ff); box-shadow: inset 0 1px 0 rgba(255,255,255,.8) }
 
-.sheet{
-  position: fixed; inset:0; z-index:50;
-  transform: translateY(100%);
-  transition: transform .55s cubic-bezier(.18,.88,.18,1);
-  will-change: transform; display:block;
-}
-.sheet.open{ transform: translateY(0) }
-.sheet .sheet-inner{
-  height:100dvh;
-  margin:0 auto; max-width:1000px;
-  background: var(--sheet-bg);
-  backdrop-filter: var(--sheet-blur);
-  border:1px solid rgba(120,200,255,.22);
-  border-radius: 0; box-shadow: none; padding:14px; overflow:auto;
-}
-.sheet .handle{
-  width:54px; height:5px; border-radius:999px; margin:6px auto 12px;
-  background: linear-gradient(180deg, #cfe9ff, #9bd4ff);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
-}
-
-/* Content */
+/* Content helpers */
 h2{ margin:0 0 8px; font-size:clamp(16px, 1.6vw, 18px); letter-spacing:.2px }
 .section-sub{ font-size:13px; color:var(--muted); margin:-2px 0 8px }
 .grid{ display:grid; gap:8px }
-.grid-2{ grid-template-columns: 1fr 1fr }
+.grid-2{ grid-template-columns:1fr 1fr }
 
-/* Support title and week */
-.support-title{
-  text-align:center; font-weight:800; font-size:clamp(16px, 1.8vw, 20px);
-  margin-top:4px; margin-bottom:14px; color:#eaf4ff; letter-spacing:.6px;
-  text-shadow: 0 0 6px rgba(0, 180, 255, .4);
-  display:flex; justify-content:center; align-items:baseline; gap:8px;
-}
-.week-label{
-  text-align:center; font-weight:400; font-size:clamp(12px, 1.2vw, 14px);
-  font-style:italic; margin: 0 0 10px 0; color:var(--muted-strong);
-  text-shadow: 0 0 4px rgba(0,180,255,.18);
-}
+.support-title{ text-align:center; font-weight:800; font-size:clamp(16px, 1.8vw, 20px); margin-top:4px; margin-bottom:14px; color:#eaf4ff; letter-spacing:.6px; text-shadow: 0 0 6px rgba(0, 180, 255, .4); display:flex; justify-content:center; align-items:baseline; gap:8px }
+.week-label{ text-align:center; font-weight:400; font-size:clamp(12px, 1.2vw, 14px); font-style:italic; margin:0 0 10px; color:var(--muted-strong); text-shadow:0 0 4px rgba(0,180,255,.18) }
 
-/* Admin lock UI badge + CTA */
-.admin-lock{
-  position: fixed; left: 10px; bottom: 100px; z-index: 41;
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 6px 10px; border-radius: 999px;
-  background: rgba(10,20,34,.72);
-  border: 1px solid rgba(120,200,255,.28);
-  box-shadow: 0 10px 22px rgba(0,0,0,.45);
-  font-weight: 800; font-size: 12px; color: #cfe9ff;
-  backdrop-filter: blur(8px) saturate(120%);
-}
-.admin-cta{
-  position: fixed; right: 12px; bottom: 100px; z-index: 41;
-  display:flex; gap: 8px;
-}
-@media (max-width: 420px){
-  .admin-lock{ bottom: 98px } .admin-cta{ bottom: 98px }
-}
+/* Admin badge / CTA */
+.admin-lock{ position:fixed; left:10px; bottom:100px; z-index:41; display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; background: rgba(10,20,34,.72); border:1px solid rgba(120,200,255,.28); box-shadow: 0 10px 22px rgba(0,0,0,.45); font-weight:800; font-size:12px; color:#cfe9ff; backdrop-filter: blur(8px) saturate(120%) }
+.admin-cta{ position:fixed; right:12px; bottom:100px; z-index:41; display:flex; gap:8px }
+@media (max-width:420px){ .admin-lock{bottom:98px} .admin-cta{bottom:98px} }
 
-/* Desktop sheet modal style */
-@media (min-width: 900px){
-  .sheet .sheet-inner{
-    height: min(86dvh, 720px);
-    max-width: 920px;
-    margin: 6dvh auto;
-    border-radius: 20px;
-    box-shadow: 0 30px 80px rgba(0,0,0,.55);
-  }
+/* Desktop modal style */
+@media (min-width:900px){
+  .sheet .sheet-inner{ height:min(86dvh,720px); max-width:920px; margin:6dvh auto; border-radius:20px; box-shadow:0 30px 80px rgba(0,0,0,.55) }
   .sheet .handle{ display:none }
   .tab{ min-width:140px }
 }
 
-/* Mobile layout fixes */
-@media (max-width: 480px){
-  .actions{ justify-content: center !important; width: 100% }
-  .actions .btn{ flex: 1 1 auto; min-width: 44% }
-  input, select, textarea{ width: 100% }
-  .tabs{ width: 100%; justify-content: space-around }
-  .tab{ min-width: 90px; padding: 10px 6px }
-}
-@media (max-width: 380px){
-  .actions .btn{ min-width: 46% }
-  .tab{ min-width: 86px }
-}
-@media (max-width: 600px){
-  #sheet-edit .actions[style*="justify-content:space-between"],
-  #sheet-gen .actions, #sheet-links .actions{
-    justify-content: center !important; gap:10px !important; flex-wrap: wrap;
-  }
+/* Mobile tweaks */
+@media (max-width:480px){ .actions{ justify-content:center !important; width:100% } .actions .btn{ flex:1 1 auto; min-width:44% } input,select,textarea{ width:100% } .tabs{ width:100%; justify-content: space-around } .tab{ min-width:90px; padding:10px 6px } }
+@media (max-width:380px){ .actions .btn{ min-width:46% } .tab{ min-width:86px } }
+@media (max-width:600px){
+  #sheet-edit .actions[style*="justify-content:space-between"], #sheet-gen .actions, #sheet-links .actions{ justify-content:center !important; gap:10px !important; flex-wrap:wrap }
 }
 .locked [data-admin]{pointer-events:none;opacity:.6;filter:grayscale(.2)}
 </style>
 </head>
 <body>
 
-<!-- Masque flou pour non-admin -->
+<!-- Masque flou + bouton connexion visible -->
 <div id="privacyMask" aria-hidden="true">
   <div class="mask-card">
-    🔒 Contenu verrouillé — connecte-toi (Admin) pour afficher et modifier les données.
+    <div data-i18n="mask_message">🔒 Contenu verrouillé — veuillez vous connecter pour afficher et modifier les données.</div>
+    <div style="margin-top:10px">
+      <button id="loginBtnMask" class="btn small" data-i18n="admin_login">Se connecter</button>
+    </div>
+    <div class="mask-note" data-i18n="mask_note">Vous devez être connecté(e) avec un email autorisé.</div>
   </div>
 </div>
 
@@ -403,7 +301,7 @@ h2{ margin:0 0 8px; font-size:clamp(16px, 1.6vw, 18px); letter-spacing:.2px }
   </section>
 
   <nav class="tabbar">
-    <div class="admin-lock" id="adminLockBadge" title="Locked — sign in as admin with Google">
+    <div class="admin-lock" id="adminLockBadge" title="Locked — sign in">
       🔒 <span data-i18n="locked_label">Verrouillé</span>
     </div>
     <div class="tabs">
@@ -414,34 +312,36 @@ h2{ margin:0 0 8px; font-size:clamp(16px, 1.6vw, 18px); letter-spacing:.2px }
   </nav>
 
   <div class="admin-cta">
-    <button class="btn small" id="adminLoginBtn"><span data-i18n="admin_login">Admin (Google)</span></button>
-    <button class="btn gray small" id="adminLogoutBtn" style="display:none"><span data-i18n="admin_logout">Logout</span></button>
+    <button class="btn small" id="adminLoginBtn"><span data-i18n="admin_login">Se connecter</span></button>
+    <button class="btn gray small" id="adminLogoutBtn" style="display:none"><span data-i18n="admin_logout">Déconnexion</span></button>
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
-<!-- Utilitaire global: applique l’état lock/unlock partout -->
+<!-- Utils: lock UI + privacy mask -->
 <script>
+function isAdminNow(){ try{ return sessionStorage.getItem('is_admin') === '1'; }catch(e){ return false; } }
+function updatePrivacyMask(){
+  const mask = document.getElementById('privacyMask');
+  if(!mask) return;
+  const show = !isAdminNow();
+  mask.classList.toggle('show', show);
+  document.documentElement.classList.toggle('noadmin', show);
+  document.documentElement.classList.toggle('auth', !show);
+}
 function applyLockUI(){
-  var isAdmin = false;
-  try{ isAdmin = sessionStorage.getItem('is_admin') === '1'; }catch(e){}
-  document.body.classList.toggle('locked', !isAdmin);
-  try{
-    var badge = document.getElementById('adminLockBadge');
-    if(badge){ badge.style.display = isAdmin ? 'none' : 'inline-flex'; }
-    var btnLogin = document.getElementById('adminLoginBtn');
-    var btnLogout = document.getElementById('adminLogoutBtn');
-    if(btnLogin) btnLogin.style.display = isAdmin ? 'none' : 'inline-flex';
-    if(btnLogout) btnLogout.style.display = isAdmin ? 'inline-flex' : 'none';
-  }catch(e){}
-  try{ togglePrivacyMask(); }catch(e){}
+  const on = isAdminNow();
+  document.body.classList.toggle('locked', !on);
+  const badge = document.getElementById('adminLockBadge');
+  const login = document.getElementById('adminLoginBtn');
+  const logout= document.getElementById('adminLogoutBtn');
+  if(badge) badge.style.display = on ? 'none' : 'inline-flex';
+  if(login) login.style.display = on ? 'none' : 'inline-flex';
+  if(logout) logout.style.display= on ? 'inline-flex' : 'none';
+  updatePrivacyMask();
 }
-function togglePrivacyMask(){
-  const isAdmin = sessionStorage.getItem('is_admin') === '1';
-  document.documentElement.classList.toggle('auth', isAdmin);
-  document.documentElement.classList.toggle('noadmin', !isAdmin);
-}
+document.addEventListener('DOMContentLoaded', updatePrivacyMask);
 </script>
 
 <script>
@@ -482,13 +382,15 @@ const I18N = {
     save_btn: "Sauver",
     cancel_btn: "Annuler",
     locked_label: "Verrouillé",
-    admin_login: "Admin (Google)",
-    admin_logout: "Logout",
+    admin_login: "Se connecter",
+    admin_logout: "Déconnexion",
     alert_choose_dates: "Choisis deux dates (lundi → dimanche)",
     alert_tag_empty: "Le tag Discord est requis.",
     alert_tag_exists: "Ce tag existe déjà.",
     alert_list_missing: "Liste introuvable.",
-    alert_export_failed: "Impossible de générer l'image sur ce navigateur."
+    alert_export_failed: "Impossible de générer l'image sur ce navigateur.",
+    mask_message: "🔒 Contenu verrouillé — veuillez vous connecter pour afficher et modifier les données.",
+    mask_note: "Vous devez être connecté(e) avec un email autorisé."
   },
   en: {
     title_support_dashboard: "Support Dashboard",
@@ -525,17 +427,17 @@ const I18N = {
     save_btn: "Save",
     cancel_btn: "Cancel",
     locked_label: "Locked",
-    admin_login: "Admin (Google)",
+    admin_login: "Sign in",
     admin_logout: "Logout",
     alert_choose_dates: "Pick two dates (Monday → Sunday)",
     alert_tag_empty: "Discord tag is required.",
     alert_tag_exists: "This tag already exists.",
     alert_list_missing: "List not found.",
-    alert_export_failed: "Unable to generate the image on this browser."
+    alert_export_failed: "Unable to generate the image on this browser.",
+    mask_message: "🔒 Content locked — please sign in to view and edit data.",
+    mask_note: "You must be signed in with an authorized email."
   }
 };
-I18N.fr.add_form_cancel='Fermer'; I18N.en.add_form_cancel='Close';
-
 function setLang(lang){
   localStorage.setItem('ui_lang', lang);
   document.documentElement.lang = lang;
@@ -549,11 +451,7 @@ function setLang(lang){
   }catch(e){}
   try{ renderLinks(); }catch(e){}
 }
-function getLang(){
-  const v = localStorage.getItem('ui_lang');
-  if (v==='fr' || v==='en') return v;
-  return (navigator.language||'en').startsWith('fr') ? 'fr' : 'en';
-}
+function getLang(){ const v=localStorage.getItem('ui_lang'); if(v==='fr'||v==='en') return v; return (navigator.language||'en').startsWith('fr') ? 'fr' : 'en'; }
 function t(lang, key){ const dict = I18N[lang] || I18N.en; return dict[key] ?? key; }
 function openText(lang){ return (lang==='fr') ? 'Accéder' : 'Go'; }
 function applyTranslations(lang){
@@ -573,11 +471,7 @@ function applyTranslations(lang){
 /* ========= Tabs / Sheets ========= */
 const backdrop = document.getElementById('backdrop');
 const tabs = document.querySelectorAll('.tab');
-const sheets = {
-  'sheet-gen': document.getElementById('sheet-gen'),
-  'sheet-edit': document.getElementById('sheet-edit'),
-  'sheet-links': document.getElementById('sheet-links'),
-};
+const sheets = { 'sheet-gen': document.getElementById('sheet-gen'), 'sheet-edit': document.getElementById('sheet-edit'), 'sheet-links': document.getElementById('sheet-links') };
 let openId = null;
 function closeSheets(){ Object.values(sheets).forEach(s => s.classList.remove('open')); backdrop.classList.remove('show'); tabs.forEach(t => t.classList.remove('active')); openId = null; }
 function toggleSheet(id){
@@ -613,7 +507,7 @@ document.getElementById('copyBtn').onclick=async function(){
   }catch(e){}
 };
 
-/* ========= Links (local + editable) ========= */
+/* ========= Links ========= */
 const DEFAULT_LINKS = {
   tickets: "https://discord.com/channels/1047415612495892480/1047415615616454661",
   leader:  "https://discord.com/channels/1047415612495892480/1047415615616454661",
@@ -680,7 +574,6 @@ function loadMembers(){
 function saveMembers(a){ localStorage.setItem('support_members_v90', JSON.stringify(a)); }
 function loadTickets(){ try{ return JSON.parse(localStorage.getItem('support_tickets_v91')||'{}'); }catch(e){ return {}; } }
 function saveTickets(o){ localStorage.setItem('support_tickets_v91', JSON.stringify(o)); }
-
 let members = loadMembers();
 let tickets = loadTickets();
 
@@ -758,9 +651,8 @@ function renderMembers(){
         const newLangs=dlg.querySelector('.e-langs').value.trim();
         const newT=Number(dlg.querySelector('.e-tickets').value||0);
         if(!newTag){ alert(t(lang,'alert_tag_empty')); return; }
-        if(newTag!==m.tag){
-          const old = tickets[m.tag]; delete tickets[m.tag]; tickets[newTag] = (old ?? newT);
-        } else { tickets[m.tag]=newT; }
+        if(newTag!==m.tag){ const old = tickets[m.tag]; delete tickets[m.tag]; tickets[newTag] = (old ?? newT); }
+        else { tickets[m.tag]=newT; }
         m.tag=newTag; m.role=newRole; m.langs=newLangs;
         localStorage.setItem('support_members_v90', JSON.stringify(members));
         localStorage.setItem('support_tickets_v91', JSON.stringify(tickets));
@@ -775,7 +667,6 @@ function renderMembers(){
       localStorage.setItem('support_members_v90', JSON.stringify(members));
       renderMembers(); renderReadOnly();
     };
-
     row.querySelector('.copy-tag').onclick = async function(){
       const text = m.tag;
       try{ await navigator.clipboard.writeText(text); this.textContent='✓'; setTimeout(()=> this.textContent='📋', 900); }
@@ -832,14 +723,13 @@ document.getElementById('exportPngBtn').addEventListener('click', async function
   }catch(err){ console.error(err); alert(I18N[lang].alert_export_failed); }
 });
 
-/* ========= Init (lang + add member UI) ========= */
+/* ========= Init ========= */
 (function init(){
   const lang = getLang();
   document.getElementById('lang-fr').addEventListener('click', ()=>setLang('fr'));
   document.getElementById('lang-en').addEventListener('click', ()=>setLang('en'));
   setLang(lang);
 
-  // Add form show/hide
   try {
     const form = document.getElementById('addForm');
     const addBtn = document.getElementById('addBtn');
@@ -848,7 +738,6 @@ document.getElementById('exportPngBtn').addEventListener('click', async function
     if (cancelBtn && form) cancelBtn.addEventListener('click', ()=>{ form.style.display='none'; });
   } catch (e) {}
 
-  // Add member
   try{
     const confirmAddBtn = document.getElementById('confirmAddBtn');
     const addTag = document.getElementById('addTag');
@@ -889,48 +778,45 @@ const FIREBASE_CONFIG = {
   appId: "1:391759293249:web:e06e61accd103c98a60fc0",
   measurementId: "G-PYE2M5LMNY"
 };
-const ALLOWED_EMAILS = ["lithiumm31@gmail.com"];
+const ALLOWED_EMAILS = ["lithiumm31@gmail.com"]; // ajoute tes emails ici
 
-const appFb = getApps().length ? getApp() : initializeApp(FIREBASE_CONFIG);
-const auth = getAuth(appFb);
-const provider = new GoogleAuthProvider();
-provider.setCustomParameters({ prompt: 'select_account' });
-
+const app = getApps().length ? getApp() : initializeApp(FIREBASE_CONFIG);
+const auth = getAuth(app);
 setPersistence(auth, browserLocalPersistence).catch(()=>{});
+const provider = new GoogleAuthProvider(); provider.setCustomParameters({ prompt:'select_account' });
 
 function isAllowed(email){ return !!email && ALLOWED_EMAILS.map(e=>e.trim().toLowerCase()).includes(email.trim().toLowerCase()); }
 function setAdminSession(on){
   try{ sessionStorage.setItem('is_admin', on ? '1':'0'); }catch(e){}
-  if(typeof applyLockUI==='function') applyLockUI();
-  if(typeof togglePrivacyMask==='function') togglePrivacyMask();
+  if(typeof applyLockUI === 'function') applyLockUI();
 }
 
-/* Admin buttons */
-const btnLogin = document.getElementById('adminLoginBtn');
-const btnLogout = document.getElementById('adminLogoutBtn');
-if(btnLogin){
-  btnLogin.onclick = async () => {
-    try{
-      const res = await signInWithPopup(auth, provider);
-      const email = res.user?.email;
-      if(isAllowed(email)){ setAdminSession(true); }
-      else{ alert((getLang()==='fr'?'Compte non autorisé: ':'Not authorized: ')+ (email||'unknown')); await signOut(auth); setAdminSession(false); }
-    }catch(err){ console.error(err); alert(getLang()==='fr'?'Échec de connexion Google.':'Google sign-in failed.'); setAdminSession(false); }
-  };
-}
-if(btnLogout){
-  btnLogout.onclick = async () => {
-    try{ await signOut(auth); }catch(e){}
-    try{ sessionStorage.removeItem('is_admin'); localStorage.removeItem('support_members_v90'); localStorage.removeItem('support_tickets_v91'); }catch(e){}
+/* Boutons */
+const btnLogin      = document.getElementById('adminLoginBtn');
+const btnLoginMask  = document.getElementById('loginBtnMask'); // bouton sur le masque
+const btnLogout     = document.getElementById('adminLogoutBtn');
+
+async function doGoogleLogin(){
+  try{
+    const res = await signInWithPopup(auth, provider);
+    const email = res.user?.email || '';
+    if(isAllowed(email)){ setAdminSession(true); }
+    else{
+      alert((getLang?.()==='fr'?'Compte non autorisé: ':'Not authorized: ')+ (email||'unknown'));
+      await signOut(auth); setAdminSession(false);
+    }
+  }catch(err){
+    console.error(err);
+    alert(getLang?.()==='fr'?'Échec de connexion Google.':'Google sign-in failed.');
     setAdminSession(false);
-  };
+  }
 }
+if(btnLogin)     btnLogin.onclick     = doGoogleLogin;
+if(btnLoginMask) btnLoginMask.onclick = doGoogleLogin;
+if(btnLogout)    btnLogout.onclick    = async ()=>{ try{ await signOut(auth); }catch(e){} setAdminSession(false); };
 
-/* Auth state */
-onAuthStateChanged(auth, (user)=>{
-  if(user && isAllowed(user.email)){ setAdminSession(true); }
-  else{ setAdminSession(false); }
-});
+/* Suivre état auth */
+onAuthStateChanged(auth, (user)=>{ const ok = !!user && isAllowed(user.email||''); setAdminSession(ok); });
 </script>
 
 <!-- Firestore realtime (shared data) -->
@@ -949,10 +835,11 @@ const FIREBASE_CONFIG = {
   measurementId: "G-PYE2M5LMNY"
 };
 
-let db=null, app=null, auth=null, firestoreReady=false;
-try{ app = getApps().length ? getApp() : initializeApp(FIREBASE_CONFIG); auth = getAuth(app); db = getFirestore(app); firestoreReady=true; }
+let db=null, app2=null, auth2=null, firestoreReady=false;
+try{ app2 = getApps().length ? getApp() : initializeApp(FIREBASE_CONFIG); auth2 = getAuth(app2); db = getFirestore(app2); firestoreReady=true; }
 catch(e){ console.warn("Firestore not initialized (fallback localStorage).", e); firestoreReady=false; }
 
+/* Local mirrors */
 window.LINKS = window.LINKS || {
   tickets: "https://discord.com/channels/1047415612495892480/1047415615616454661",
   leader:  "https://discord.com/channels/1047415612495892480/1047415615616454661",
@@ -962,9 +849,11 @@ window.members = window.members || [];
 window.tickets = window.tickets || {};
 window.supportWeek = window.supportWeek || { from:null, to:null };
 
+/* LocalStorage helpers */
 function lsGet(key, def){ try{ const v=localStorage.getItem(key); return v?JSON.parse(v):def; }catch(e){ return def; } }
 function lsSet(key,val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
 
+/* Fallback local si pas de Firestore */
 function useLocalFallback(){
   window.LINKS = lsGet('support_links_v92', window.LINKS);
   window.members = lsGet('support_members_v90', window.members);
@@ -975,12 +864,14 @@ function useLocalFallback(){
   try{ const lang=(localStorage.getItem('ui_lang')||'fr'); updateWeekLabel(lang, window.supportWeek.from, window.supportWeek.to); }catch(e){}
 }
 
+/* Init docs si besoin */
 async function ensureDocs(){
   if(!firestoreReady) return;
   await setDoc(doc(db, "links", "config"), window.LINKS, { merge:true });
   await setDoc(doc(db, "ui", "state"), { from: window.supportWeek.from || null, to: window.supportWeek.to || null }, { merge:true });
 }
 
+/* Realtime listeners */
 function startRealtime(){
   if(!firestoreReady){ useLocalFallback(); return; }
 
@@ -990,7 +881,7 @@ function startRealtime(){
   onSnapshot(doc(db, "ui", "state"), (snap)=>{ const lang=(localStorage.getItem('ui_lang')||'fr'); if(snap.exists()){ const {from,to}=snap.data(); window.supportWeek={from:from||null, to:to||null}; try{ updateWeekLabel(lang, from, to); }catch(e){} } });
 }
 
-/* Writes */
+/* Ecritures */
 window.saveLinkFirestore = async function(key, value){
   if(!firestoreReady){ const L={...window.LINKS, [key]: value}; lsSet('support_links_v92', L); window.LINKS=L; try{ renderLinks(); }catch(e){}; return; }
   await setDoc(doc(db, "links", "config"), { [key]: value }, { merge: true });
@@ -1025,13 +916,19 @@ window.saveWeekFirestore = async function(from, to){
 function wireUI(){
   const saveTicketsUrl = document.getElementById('saveTicketsUrl');
   const saveLeaderUrl = document.getElementById('saveLeaderUrl');
-  const saveSheetUrl = document.getElementById('saveSheetUrl');
+  const saveSheetUrl  = document.getElementById('saveSheetUrl');
   if(saveTicketsUrl) saveTicketsUrl.onclick = async ()=>{ const v=(document.getElementById('ticketsUrlInput').value||'').trim(); if(!v) return; await window.saveLinkFirestore('tickets', v); document.getElementById('editorTickets').style.display='none'; };
-  if(saveLeaderUrl) saveLeaderUrl.onclick = async ()=>{ const v=(document.getElementById('leaderUrlInput').value||'').trim(); if(!v) return; await window.saveLinkFirestore('leader', v); document.getElementById('editorLeader').style.display='none'; };
-  if(saveSheetUrl) saveSheetUrl.onclick = async ()=>{ const v=(document.getElementById('sheetUrlInput').value||'').trim(); if(!v) return; await window.saveLinkFirestore('sheet', v); document.getElementById('editorSheet').style.display='none'; };
+  if(saveLeaderUrl)  saveLeaderUrl.onclick  = async ()=>{ const v=(document.getElementById('leaderUrlInput').value||'').trim();  if(!v) return; await window.saveLinkFirestore('leader', v); document.getElementById('editorLeader').style.display='none'; };
+  if(saveSheetUrl)   saveSheetUrl.onclick   = async ()=>{ const v=(document.getElementById('sheetUrlInput').value||'').trim();   if(!v) return; await window.saveLinkFirestore('sheet', v);   document.getElementById('editorSheet').style.display='none'; };
 
   const confirmAddBtn = document.getElementById('confirmAddBtn');
-  if(confirmAddBtn) confirmAddBtn.onclick = async ()=>{ const tag=(document.getElementById('addTag').value||'').trim(); const role=(document.getElementById('addRole').value||'Support').trim(); const langs=(document.getElementById('addLangs').value||'').trim(); if(!tag){ alert('Tag requis'); return; } if(window.members.some(m => (m.tag||'').toLowerCase()===tag.toLowerCase())){ alert('Ce tag existe déjà.'); return; } await window.addMemberFirestore(tag, role, langs); document.getElementById('addTag').value=''; document.getElementById('addRole').value='Support'; document.getElementById('addLangs').value=''; document.getElementById('addForm').style.display='none'; };
+  if(confirmAddBtn) confirmAddBtn.onclick = async ()=>{
+    const tag=(document.getElementById('addTag').value||'').trim(); const role=(document.getElementById('addRole').value||'Support').trim(); const langs=(document.getElementById('addLangs').value||'').trim();
+    if(!tag){ alert('Tag requis'); return; }
+    if(window.members.some(m => (m.tag||'').toLowerCase()===tag.toLowerCase())){ alert('Ce tag existe déjà.'); return; }
+    await window.addMemberFirestore(tag, role, langs);
+    document.getElementById('addTag').value=''; document.getElementById('addRole').value='Support'; document.getElementById('addLangs').value=''; document.getElementById('addForm').style.display='none';
+  };
 
   document.addEventListener('click', async (e)=>{
     if(e.target && e.target.classList && e.target.classList.contains('save2')){
@@ -1059,14 +956,13 @@ function wireUI(){
   });
 
   document.getElementById('refreshBtn')?.addEventListener('click', ()=>{
-    // En mode Firestore, onSnapshot tient à jour. Ce bouton sert de “soft rerender”.
     try{ renderMembers(); renderReadOnly(); renderLinks(); }catch(e){}
   });
 }
 
 /* Start after auth (ou fallback) */
 if(firestoreReady){
-  onAuthStateChanged(auth, (user)=>{ if(user){ ensureDocs().then(()=>{ startRealtime(); wireUI(); }); } else { useLocalFallback(); wireUI(); } });
+  onAuthStateChanged(auth2, (user)=>{ if(user){ ensureDocs().then(()=>{ startRealtime(); wireUI(); }); } else { useLocalFallback(); wireUI(); } });
 }else{ useLocalFallback(); wireUI(); }
 </script>
 
@@ -1074,9 +970,12 @@ if(firestoreReady){
 <script>
 (function(){
   function setLockedState(locked){
-    try{ if (locked) sessionStorage.setItem('is_admin','0'); else sessionStorage.setItem('is_admin','1'); }catch(e){}
+    try{ sessionStorage.setItem('is_admin', locked ? '0':'1'); }catch(e){}
     try{ applyLockUI(); }catch(e){}
-    try{ document.documentElement.classList.toggle('auth', !locked); document.documentElement.classList.toggle('noadmin', locked); }catch(e){}
+    try{
+      document.documentElement.classList.toggle('auth', !locked);
+      document.documentElement.classList.toggle('noadmin', locked);
+    }catch(e){}
   }
   try{ const flag = sessionStorage.getItem('is_admin'); setLockedState(flag==='1'?false:true); }catch(e){ setLockedState(true); }
 })();
