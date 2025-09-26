@@ -570,7 +570,9 @@ function loadMembers(){
   } catch(e) {
     return DEFAULT_MEMBERS.slice();
   }
-                                                                                                          
+}
+
+  
 function saveMembers(a){ localStorage.setItem('support_members_v90', JSON.stringify(a)); }
 function loadTickets(){
   try {
