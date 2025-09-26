@@ -1,395 +1,1085 @@
 <!doctype html>
-<html lang="fr" class="noadmin"> <!-- (1) Anti-flash: verrou par défaut -->
+<html lang="fr" class="noadmin">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Support • Neon Glass PRO — Sheets Overlay</title>
-  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600&display=swap" rel="stylesheet">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Support • Neon Glass PRO — Sheets Overlay</title>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600&display=swap" rel="stylesheet">
 
-  <!-- (1) Script ultra-tôt: bascule noadmin/auth AVANT le premier paint -->
-  <script>
-    (function earlyAuthClass(){
-      try{
-        var isAdmin = sessionStorage.getItem('is_admin') === '1';
-        var html = document.documentElement;
-        if(isAdmin){ html.classList.remove('noadmin'); html.classList.add('auth'); }
-        else{ html.classList.add('noadmin'); html.classList.remove('auth'); }
-      }catch(e){}
-    })();
-  </script>
+<!-- Anti-flash: bascule la classe admin/non-admin AVANT paint -->
+<script>
+(function(){
+  try{
+    var isAdmin = sessionStorage.getItem('is_admin') === '1';
+    var html = document.documentElement;
+    html.classList.toggle('auth', !!isAdmin);
+    html.classList.toggle('noadmin', !isAdmin);
+  }catch(e){}
+})();
+</script>
 
-  <style>
-  /* ===== Neon Glass PRO core (v19 NOW-1..8) ===== */
-  :root{
-    --bg0:#050a12; --bg1:#0b1728;
-    --ink:#eaf4ff; --muted:#9bb5cb; --muted-strong:#cfe4ff;
-    --accent:#1ec8ff; --accent-2:#63ffd7;
-    --panel-1: rgba(12,22,36,.52);
-    --panel-2: rgba(10,20,34,.64);
-    --border-outer: rgba(120,200,255,.28);
-    --border-inner: rgba(255,255,255,.08);
-    --radius:18px;
-    --shadow-lg: 0 26px 64px rgba(0,0,0,.55);
-    --shadow-md: 0 14px 36px rgba(0,0,0,.45);
-    --shadow-sm: 0 6px 18px rgba(0,0,0,.38);
-    --sheet-bg: rgba(10,18,30,.78);
-    --sheet-blur: blur(12px) saturate(140%);
+<style>
+/* ===== Neon Glass PRO responsive + i18n (v19 Pro) ===== */
+:root{
+  --bg0:#050a12; --bg1:#0b1728;
+  --ink:#eaf4ff; --muted:#9bb5cb; --muted-strong:#cfe4ff;
+  --accent:#1ec8ff; --accent-2:#63ffd7;
+  --panel-1: rgba(12,22,36,.52);
+  --panel-2: rgba(10,20,34,.64);
+  --border-outer: rgba(120,200,255,.28);
+  --border-inner: rgba(255,255,255,.08);
+  --radius:18px;
+  --shadow-lg: 0 26px 64px rgba(0,0,0,.55);
+  --shadow-md: 0 14px 36px rgba(0,0,0,.45);
+  --shadow-sm: 0 6px 18px rgba(0,0,0,.38);
+  --sheet-bg: rgba(10,18,30,.78);
+  --sheet-blur: blur(12px) saturate(140%);
+}
+
+*,*::before,*::after{ box-sizing:border-box }
+html,body{ width:100%; height:100% }
+html{ background:var(--bg0) }
+body{
+  margin:0; color:var(--ink);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+  background:
+    radial-gradient(1200px 520px at 28% -8%, rgba(30,200,255,.18), transparent 60%),
+    radial-gradient(1100px 480px at 120% -20%, rgba(99,255,215,.12), transparent 65%),
+    linear-gradient(180deg, #050a12 0%, #0b1728 48%, #06101a 100%);
+}
+
+/* Anti-flash + masque flou */
+.noadmin .app{ filter: blur(10px) saturate(115%); pointer-events:none; user-select:none }
+.auth .app{ filter:none; pointer-events:auto }
+#privacyMask{
+  position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+  z-index:9999; background:rgba(2,6,23,.35); backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+}
+.auth #privacyMask{ display:none }
+#privacyMask .mask-card{
+  padding:18px 22px; border-radius:16px;
+  background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 10px 30px rgba(0,0,0,.45); color:#e6f0ff; text-align:center; font-weight:700;
+}
+
+/* App shell */
+.app{ min-height:100dvh; display:grid; grid-template-rows:auto 1fr auto; }
+
+/* ===== Header ===== */
+.header{
+  position: sticky; top:0; z-index:10;
+  padding: 16px clamp(14px,4vw,22px);
+  background:
+    linear-gradient(180deg, rgba(6,12,20,.75), rgba(6,12,20,.35), transparent),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 1px, transparent 1px 3px);
+  border-bottom:1px solid rgba(120,200,255,.18);
+  backdrop-filter: blur(6px) saturate(120%);
+}
+.h-wrap{ max-width:1200px; margin:0 auto; display:flex; align-items:center; justify-content:center; gap:12px; position:relative; }
+.h-dot{
+  width:10px; height:10px; border-radius:50%;
+  background: radial-gradient(circle at 40% 30%, #fff, #9ee6ff 30%, rgba(158,230,255,0) 70%);
+  box-shadow: 0 0 22px rgba(30,200,255,.8);
+}
+h1{ margin:0; font-size: clamp(18px, 2.2vw, 26px); letter-spacing:.3px; text-shadow:0 0 18px rgba(30,200,255,.35) }
+
+/* ===== Main container ===== */
+.container{
+  width:100%;
+  max-width: min(1100px, 94vw);
+  margin:0 auto;
+  padding: 14px clamp(14px,4vw,22px) 90px;
+}
+.card{
+  position:relative; overflow:hidden;
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, var(--panel-1), var(--panel-2));
+  border:1px solid var(--border-outer);
+  box-shadow: var(--shadow-lg);
+  padding:16px;
+}
+.card::before{
+  content:""; position:absolute; inset:0; pointer-events:none; border-radius:inherit;
+  box-shadow: inset 0 0 0 1px var(--border-inner), inset 0 1px 24px rgba(30,200,255,.08);
+}
+.card::after{
+  content:""; position:absolute; left:0; right:0; top:0; height:46%;
+  background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,0) 60%);
+  pointer-events:none;
+}
+.noise{
+  position:absolute; inset:0; pointer-events:none; border-radius:inherit; opacity:.08; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='.35'/></svg>");
+}
+
+/* Buttons & inputs */
+input, select, textarea{
+  width:100%; border-radius:12px;
+  background: rgba(7,16,26,.82);
+  border:1px solid #1f3a56; color:var(--ink);
+  padding:10px 12px; box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+}
+textarea{ min-height:70px }
+input:focus, select:focus, textarea:focus{
+  outline:none; border-color:#2a79a6;
+  box-shadow: 0 0 0 2px rgba(30,200,255,.22);
+}
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  padding:10px 16px; border-radius:999px; border:0; cursor:pointer;
+  font-weight:800; line-height:1; color:#03121a;
+  background: linear-gradient(180deg, #b9efff, #59d4ff);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.65), var(--shadow-sm);
+  transition: transform .08s ease, filter .15s ease, box-shadow .15s ease;
+}
+.btn:active{ transform: translateY(1px) }
+.btn.gray{
+  background:#2b3446; color:#eaf4ff;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), var(--shadow-sm);
+}
+.btn.small{ padding:8px 12px; font-size:13px }
+.actions{ display:flex; gap:8px; flex-wrap:wrap }
+a.btn{ text-decoration:none !important }
+
+/* Base list */
+.member-ro{
+  display:grid; grid-template-columns: 1fr auto auto; gap:8px;
+  border:1px solid rgba(120,200,255,.28); border-radius:12px; padding:10px;
+  background: linear-gradient(180deg, rgba(16,28,44,.58), rgba(10,22,36,.62));
+  box-shadow: var(--shadow-sm); align-items:center;
+  margin-bottom:8px;
+}
+.member-ro .tag{ font-weight:900; letter-spacing:.2px }
+.member-ro .role{ color:var(--muted-strong); font-size:clamp(12px, 1.2vw, 13px) }
+.member-ro .tickets-badge{
+  min-width:56px; text-align:center; font-weight:900; border-radius:999px; padding:6px 10px;
+  background:linear-gradient(90deg, #e7f5ff, #cfe9ff, #e7f5ff);
+  color:#0c1a2a; border:1px solid rgba(120,200,255,.45);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+  background-size: 200% 100%;
+  animation: badgeGlow 3.2s linear infinite;
+}
+@keyframes badgeGlow{
+  0%{ background-position: 0% 50% }
+  50%{ background-position: 100% 50% }
+  100%{ background-position: 0% 50% }
+}
+.member-ro .status{ min-width:66px; text-align:center; font-weight:900 }
+.status.ok{ color:#24e3b5 } .status.low{ color:#ff9c9c } .status.neutral{ color:#8eb5cf }
+
+/* Bottom Tab bar */
+.tabbar{
+  position: fixed; bottom: 0; left:0; right:0; z-index:40;
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, rgba(6,12,20,.15), rgba(6,12,20,.7));
+  border-top: 1px solid rgba(120,200,255,.2);
+  backdrop-filter: blur(8px) saturate(120%);
+}
+.tabs{
+  max-width:1000px; margin:0 auto;
+  display:flex; justify-content:center; align-items:center; gap:12px;
+  width:fit-content;
+}
+.tab{ min-width:120px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:6px; padding:10px 8px; border-radius:12px; cursor:pointer;
+  color:#cfe9ff; font-size:12px;
+  background: linear-gradient(180deg, rgba(14,24,38,.35), rgba(10,20,34,.5));
+  border:1px solid rgba(120,200,255,.26);
+  box-shadow: var(--shadow-sm);
+  transition: filter .12s ease, transform .18s cubic-bezier(.2,.8,.2,1), box-shadow .15s ease;
+  text-align:center;
+}
+.tab.active{ filter: brightness(1.08); box-shadow: var(--shadow-md); transform: translateY(-2px) }
+.tab .ic{ font-size:18px }
+
+/* Overlay Backdrop + Bottom Sheets */
+.backdrop{
+  position: fixed; inset:0; z-index:30; display:none;
+  background: radial-gradient(1200px 600px at 50% -10%, rgba(30,200,255,.10), transparent 60%),
+              linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,.65));
+  transition: opacity .22s ease; opacity:0;
+}
+.backdrop.show{ display:block; opacity:1 }
+
+.sheet{
+  position: fixed; inset:0; z-index:50;
+  transform: translateY(100%);
+  transition: transform .55s cubic-bezier(.18,.88,.18,1);
+  will-change: transform; display:block;
+}
+.sheet.open{ transform: translateY(0) }
+.sheet .sheet-inner{
+  height:100dvh;
+  margin:0 auto; max-width:1000px;
+  background: var(--sheet-bg);
+  backdrop-filter: var(--sheet-blur);
+  border:1px solid rgba(120,200,255,.22);
+  border-radius: 0; box-shadow: none; padding:14px; overflow:auto;
+}
+.sheet .handle{
+  width:54px; height:5px; border-radius:999px; margin:6px auto 12px;
+  background: linear-gradient(180deg, #cfe9ff, #9bd4ff);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+}
+
+/* Content */
+h2{ margin:0 0 8px; font-size:clamp(16px, 1.6vw, 18px); letter-spacing:.2px }
+.section-sub{ font-size:13px; color:var(--muted); margin:-2px 0 8px }
+.grid{ display:grid; gap:8px }
+.grid-2{ grid-template-columns: 1fr 1fr }
+
+/* Support title and week */
+.support-title{
+  text-align:center; font-weight:800; font-size:clamp(16px, 1.8vw, 20px);
+  margin-top:4px; margin-bottom:14px; color:#eaf4ff; letter-spacing:.6px;
+  text-shadow: 0 0 6px rgba(0, 180, 255, .4);
+  display:flex; justify-content:center; align-items:baseline; gap:8px;
+}
+.week-label{
+  text-align:center; font-weight:400; font-size:clamp(12px, 1.2vw, 14px);
+  font-style:italic; margin: 0 0 10px 0; color:var(--muted-strong);
+  text-shadow: 0 0 4px rgba(0,180,255,.18);
+}
+
+/* Admin lock UI badge + CTA */
+.admin-lock{
+  position: fixed; left: 10px; bottom: 100px; z-index: 41;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 10px; border-radius: 999px;
+  background: rgba(10,20,34,.72);
+  border: 1px solid rgba(120,200,255,.28);
+  box-shadow: 0 10px 22px rgba(0,0,0,.45);
+  font-weight: 800; font-size: 12px; color: #cfe9ff;
+  backdrop-filter: blur(8px) saturate(120%);
+}
+.admin-cta{
+  position: fixed; right: 12px; bottom: 100px; z-index: 41;
+  display:flex; gap: 8px;
+}
+@media (max-width: 420px){
+  .admin-lock{ bottom: 98px } .admin-cta{ bottom: 98px }
+}
+
+/* Desktop sheet modal style */
+@media (min-width: 900px){
+  .sheet .sheet-inner{
+    height: min(86dvh, 720px);
+    max-width: 920px;
+    margin: 6dvh auto;
+    border-radius: 20px;
+    box-shadow: 0 30px 80px rgba(0,0,0,.55);
   }
+  .sheet .handle{ display:none }
+  .tab{ min-width:140px }
+}
 
-  *{ box-sizing: border-box; }
-  html, body{ width:100%; height:100%; }
-  html{ background: var(--bg0); }
-  body{
-    margin:0; color:var(--ink);
-    font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
-    background:
-      radial-gradient(1200px 520px at 28% -8%, rgba(30,200,255,.18), transparent 60%),
-      radial-gradient(1100px 480px at 120% -20%, rgba(99,255,215,.12), transparent 65%),
-      linear-gradient(180deg, #050a12 0%, #0b1728 48%, #06101a 100%);
+/* Mobile layout fixes */
+@media (max-width: 480px){
+  .actions{ justify-content: center !important; width: 100% }
+  .actions .btn{ flex: 1 1 auto; min-width: 44% }
+  input, select, textarea{ width: 100% }
+  .tabs{ width: 100%; justify-content: space-around }
+  .tab{ min-width: 90px; padding: 10px 6px }
+}
+@media (max-width: 380px){
+  .actions .btn{ min-width: 46% }
+  .tab{ min-width: 86px }
+}
+@media (max-width: 600px){
+  #sheet-edit .actions[style*="justify-content:space-between"],
+  #sheet-gen .actions, #sheet-links .actions{
+    justify-content: center !important; gap:10px !important; flex-wrap: wrap;
   }
-
-  /* (1) Règles globales .noadmin/.auth (anti-flash + masque) */
-  .noadmin .app-content{ filter: blur(10px) saturate(110%); pointer-events:none; user-select:none; }
-  .auth   .app-content{ filter:none; pointer-events:auto; }
-
-  /* Masque flou (5) : message seul, pas de bouton */
-  #privacyMask{
-    position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
-    z-index:9999; background:rgba(2,6,23,.35); backdrop-filter: blur(10px) saturate(120%);
-  }
-  .auth #privacyMask{ display:none; }
-  #privacyMask .mask-card{
-    padding:18px 22px; border-radius:16px;
-    background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.12);
-    box-shadow:0 10px 30px rgba(0,0,0,.45); color:#e6f0ff; text-align:center; font-weight:700;
-  }
-  #privacyMask .mask-note{ opacity:.8; font-weight:500; font-size:12px; margin-top:6px; }
-
-  /* App shell / header / card / etc. (inchangé visuel) */
-  .app{ min-height:100dvh; display:grid; grid-template-rows:auto 1fr auto; }
-  .header{
-    position: sticky; top:0; z-index:10; padding: 16px clamp(14px,4vw,22px);
-    background: linear-gradient(180deg, rgba(6,12,20,.75), rgba(6,12,20,.35), transparent),
-                repeating-linear-gradient(90deg, rgba(255,255,255,.035) 0 1px, transparent 1px 3px);
-    border-bottom:1px solid rgba(120,200,255,.18);
-    backdrop-filter: blur(6px) saturate(120%);
-  }
-  .h-wrap{ max-width:1200px; margin:0 auto; display:flex; align-items:center; justify-content:center; gap:12px; position:relative; }
-  h1{ margin:0; font-size: clamp(18px, 2.2vw, 26px); letter-spacing:.3px; text-shadow:0 0 18px rgba(30,200,255,.35) }
-  .container{ width:100%; max-width:min(1100px, 94vw); margin:0 auto; padding: 14px clamp(14px,4vw,22px) 90px; }
-  .card{
-    position:relative; overflow:hidden; border-radius: var(--radius);
-    background: linear-gradient(180deg, var(--panel-1), var(--panel-2));
-    border:1px solid var(--border-outer); box-shadow: var(--shadow-lg); padding:16px;
-  }
-  .noise{ position:absolute; inset:0; pointer-events:none; border-radius:inherit; opacity:.08; mix-blend-mode: overlay; }
-
-  .support-title{ text-align:center; font-weight:800; font-size:clamp(16px, 1.8vw, 20px); margin:4px 0 14px; color:#eaf4ff; letter-spacing:.6px; text-shadow: 0 0 6px rgba(0, 180, 255, .4); }
-  .week-label{ text-align:center; font-weight:400; font-size:clamp(12px, 1.2vw, 14px); font-style:italic; margin:0 0 10px; color:var(--muted-strong); }
-
-  .member-ro{
-    display:grid; grid-template-columns: 1fr auto auto; gap:8px;
-    border:1px solid rgba(120,200,255,.28); border-radius:12px; padding:10px;
-    background: linear-gradient(180deg, rgba(16,28,44,.58), rgba(10,22,36,.62));
-    box-shadow: var(--shadow-sm); align-items:center; margin-bottom:8px;
-  }
-  .member-ro .tag{ font-weight:900; letter-spacing:.2px; }
-  .member-ro .role{ color:var(--muted-strong); font-size:clamp(12px, 1.2vw, 13px) }
-  .tickets-badge{
-    min-width:56px; text-align:center; font-weight:900; border-radius:999px; padding:6px 10px;
-    background:linear-gradient(90deg, #e7f5ff, #cfe9ff, #e7f5ff); color:#0c1a2a; border:1px solid rgba(120,200,255,.45);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.7); background-size:200% 100%; animation: badgeGlow 3.2s linear infinite;
-  }
-  @keyframes badgeGlow{ 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-  .status.ok{ color:#24e3b5; } .status.low{ color:#ff9c9c; } .status.neutral{ color:#8eb5cf; }
-
-  .btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:10px 16px; border-radius:999px; border:0; cursor:pointer; font-weight:800; line-height:1; color:#03121a; background: linear-gradient(180deg, #b9efff, #59d4ff); box-shadow: inset 0 1px 0 rgba(255,255,255,.65), var(--shadow-sm); }
-  .btn.gray{ background:#2b3446; color:#eaf4ff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), var(--shadow-sm); }
-  .btn.small{ padding:8px 12px; font-size:13px }
-  a.btn{ text-decoration:none; }
-
-  /* (6) Boutons d’auth: login visible seulement en non-admin, logout visible seulement en admin */
-  .auth #loginBtn{ display:none !important; }
-  .noadmin #logoutBtn{ display:none !important; }
-  #logoutBtn{ position: fixed; top: 10px; right: 10px; z-index: 10000; }
-
-  /* (7) Badge d’état discret */
-  #stateBadge{
-    position:fixed; left:10px; top:10px; z-index:10000;
-    padding:6px 10px; border-radius:999px; font-size:12px; font-weight:800;
-    background:rgba(10,20,34,.72); border:1px solid rgba(120,200,255,.28); color:#cfe9ff;
-    backdrop-filter: blur(8px) saturate(120%);
-  }
-  </style>
+}
+.locked [data-admin]{pointer-events:none;opacity:.6;filter:grayscale(.2)}
+</style>
 </head>
 <body>
-  <!-- (5) Masque flou (message seul) -->
-  <div id="privacyMask" aria-hidden="true">
-    <div class="mask-card">
-      🔒 Contenu verrouillé — connecte-toi (Admin) pour charger les données
-      <div class="mask-note">Aucune donnée n’est chargée tant que tu n’es pas authentifié(e).</div>
+
+<!-- Masque flou pour non-admin -->
+<div id="privacyMask" aria-hidden="true">
+  <div class="mask-card">
+    🔒 Contenu verrouillé — connecte-toi (Admin) pour afficher et modifier les données.
+  </div>
+</div>
+
+<div class="app">
+  <header class="header">
+    <div class="h-wrap">
+      <span class="h-dot"></span>
+      <div><h1>Tableau de support — Neon Glass PRO</h1></div>
     </div>
-  </div>
+  </header>
 
-  <!-- (7) Badge d’état -->
-  <div id="stateBadge" role="status" aria-live="polite">Lecture seule</div>
-
-  <!-- (6) Boutons d’auth -->
-  <div id="authCtas" style="position:fixed; right:10px; bottom:10px; z-index:10000; display:flex; gap:8px;">
-    <button id="loginBtn"  class="btn small">Se connecter (Admin/Google)</button>
-    <button id="logoutBtn" class="btn gray small">Déconnexion</button>
-  </div>
-
-  <div class="app app-content"><!-- (1) floutée en noadmin -->
-    <header class="header">
-      <div class="h-wrap">
-        <h1>Tableau de support — Neon Glass PRO</h1>
+  <main class="container">
+    <section id="baseCard" class="card">
+      <div id="captureArea" aria-live="polite">
+        <div class="support-title" data-i18n="support_ticket">Support — Tickets</div>
+        <div id="weekLabel" class="week-label">Semaine du … au …</div>
+        <div class="noise"></div>
+        <div id="roList"></div>
       </div>
-    </header>
+      <div class="actions" style="margin-top:10px; justify-content:flex-end">
+        <button class="btn gray" id="refreshBtn">Actualiser</button>
+        <button class="btn" id="exportPngBtn" data-i18n="export_png_btn">Télécharger l'image (PNG)</button>
+      </div>
+      <div class="lang-row" style="display:flex; justify-content:flex-end; margin-top:10px;">
+        <div class="lang-switch" aria-label="Langue" style="display:flex; gap:6px; align-items:center; background: rgba(10,20,34,.5); border:1px solid rgba(120,200,255,.25); border-radius:999px; padding:4px;">
+          <button id="lang-fr" type="button" class="btn gray small">FR</button>
+          <button id="lang-en" type="button" class="btn gray small">EN</button>
+        </div>
+      </div>
+    </section>
+  </main>
 
-    <main class="container">
-      <section id="baseCard" class="card">
-        <div id="captureArea" aria-live="polite">
-          <div class="support-title">Support — Tickets</div>
-          <div id="weekLabel" class="week-label">Semaine du … au …</div>
-          <div class="noise"></div>
-          <div id="roList">
-            <!-- (2) Placeholders neutres tant que non-auth -->
-            <div class="member-ro">
-              <div><div class="tag">—</div><div class="role">—</div></div>
-              <div class="tickets-badge">0</div>
-              <div class="status neutral">—</div>
-            </div>
+  <div id="backdrop" class="backdrop"></div>
+
+  <!-- Sheets -->
+  <section id="sheet-gen" class="sheet" aria-hidden="true">
+    <div class="sheet-inner">
+      <div class="handle"></div><button class="close-x btn gray small" type="button" data-close-sheet>✕</button>
+      <h2 data-i18n="gen_title">Générateur</h2>
+      <div class="section-sub" data-i18n="gen_desc">Entre une semaine <b>lundi → dimanche</b>. La commande produira <code>après:</code> = (début − 1 jour) et <code>avant:</code> = (fin + 1 jour).</div>
+      <div class="grid grid-2">
+        <input id="dateFrom" type="date" data-i18n-attr="placeholder:gen_input_from_placeholder" placeholder="Début (lundi)">
+        <input id="dateTo" type="date" data-i18n-attr="placeholder:gen_input_to_placeholder" placeholder="Fin (dimanche)">
+      </div>
+      <div class="actions" style="margin-top:10px">
+        <button class="btn" id="genBtn" data-i18n="gen_generate_btn">Générer</button>
+        <button class="btn gray" id="copyBtn" data-i18n="gen_copy_btn">Copier commande</button>
+      </div>
+      <textarea id="out" data-i18n-attr="placeholder:gen_result_placeholder" placeholder="Résultat…"></textarea>
+    </div>
+  </section>
+
+  <section id="sheet-edit" class="sheet" aria-hidden="true">
+    <div class="sheet-inner">
+      <div class="handle"></div><button class="close-x btn gray small" type="button" data-close-sheet>✕</button>
+      <div class="actions" style="justify-content:space-between; width:100%; display:flex; align-items:center;">
+        <h2 style="margin:0" data-i18n="edit_title">Annuaire — Édition</h2>
+        <div class="actions" style="gap:14px"><button class="btn" id="addBtn" data-i18n="add_member_btn">+ Ajouter un membre</button></div>
+      </div>
+      <div id="addForm" class="card" style="display:none; padding:10px; margin-top:10px">
+        <div class="grid grid-2">
+          <div><label data-i18n="add_form_tag">Tag Discord</label><input id="addTag" placeholder="ex: nouveau_membre" data-i18n-attr="placeholder:add_form_tag_ph"></div>
+          <div><label data-i18n="add_form_role">Rôle</label>
+            <select id="addRole">
+              <option>Leader support</option><option>Senior support</option><option>Support</option><option>Trial support</option>
+            </select>
           </div>
         </div>
+        <div style="margin-top:8px"><label data-i18n="add_form_langs">Langues (abrév., ex: FR, ES, NL)</label><input id="addLangs" placeholder="ex: FR, ES" data-i18n-attr="placeholder:add_form_langs_ph"></div>
+        <div class="actions" style="margin-top:8px"><button class="btn" id="confirmAddBtn" data-i18n="add_form_add">Ajouter</button><button class="btn gray" id="cancelAddBtn" data-i18n="add_form_cancel">Fermer</button></div>
+      </div>
+      <div id="membersContainer" style="margin-top:8px"></div>
+    </div>
+  </section>
 
-        <div class="actions" style="margin-top:10px; display:flex; justify-content:flex-end; gap:8px;">
-          <button class="btn gray" id="refreshBtn" title="Actualiser depuis Firestore">Actualiser</button>
-          <button class="btn" id="exportPngBtn">Télécharger l'image (PNG)</button>
-        </div>
+  <section id="sheet-links" class="sheet" aria-hidden="true">
+    <div class="sheet-inner">
+      <div class="handle"></div><button class="close-x btn gray small" type="button" data-close-sheet>✕</button>
+      <h2 data-i18n="links_title">Liens utiles</h2>
+      <div id="linksList"></div>
 
-        <div class="lang-row" style="display:flex; justify-content:flex-end; margin-top:10px;">
-          <div class="lang-switch" aria-label="Langue" style="display:flex; gap:6px; align-items:center; background: rgba(10,20,34,.5); border:1px solid rgba(120,200,255,.25); border-radius:999px; padding:4px;">
-            <button id="lang-fr" type="button" class="btn gray small">FR</button>
-            <button id="lang-en" type="button" class="btn gray small">EN</button>
-          </div>
-        </div>
-      </section>
-    </main>
+      <div id="editorTickets" class="card" style="display:none; padding:10px; margin-top:10px">
+        <h3 style="margin:0 0 6px 0; font-size:14px" data-i18n="new_url_for_tickets">Nouvelle URL pour “Tickets log”</h3>
+        <input id="ticketsUrlInput">
+        <div class="actions" style="margin-top:8px"><button class="btn" id="saveTicketsUrl" data-i18n="save_btn">Sauver</button><button class="btn gray" data-close="#editorTickets" data-i18n="cancel_btn">Annuler</button></div>
+      </div>
+      <div id="editorLeader" class="card" style="display:none; padding:10px; margin-top:10px">
+        <h3 style="margin:0 0 6px 0; font-size:14px" data-i18n="new_url_for_leader">Nouvelle URL pour “Leader chat”</h3>
+        <input id="leaderUrlInput">
+        <div class="actions" style="margin-top:8px"><button class="btn" id="saveLeaderUrl" data-i18n="save_btn">Sauver</button><button class="btn gray" data-close="#editorLeader" data-i18n="cancel_btn">Annuler</button></div>
+      </div>
+      <div id="editorSheet" class="card" style="display:none; padding:10px; margin-top:10px">
+        <h3 style="margin:0 0 6px 0; font-size:14px" data-i18n="new_url_for_sheet">Nouvelle URL pour “Google Sheet hebdo”</h3>
+        <input id="sheetUrlInput">
+        <div class="actions" style="margin-top:8px"><button class="btn" id="saveSheetUrl" data-i18n="save_btn">Sauver</button><button class="btn gray" data-close="#editorSheet" data-i18n="cancel_btn">Annuler</button></div>
+      </div>
+    </div>
+  </section>
+
+  <nav class="tabbar">
+    <div class="admin-lock" id="adminLockBadge" title="Locked — sign in as admin with Google">
+      🔒 <span data-i18n="locked_label">Verrouillé</span>
+    </div>
+    <div class="tabs">
+      <button class="tab" data-sheet="sheet-gen"><span class="ic">⚙️</span> <span data-i18n="tab_generator">Générateur</span></button>
+      <button class="tab" data-sheet="sheet-edit"><span class="ic">✏️</span> <span data-i18n="tab_edit">Éditer</span></button>
+      <button class="tab" data-sheet="sheet-links"><span class="ic">🔗</span> <span data-i18n="tab_links">Liens</span></button>
+    </div>
+  </nav>
+
+  <div class="admin-cta">
+    <button class="btn small" id="adminLoginBtn"><span data-i18n="admin_login">Admin (Google)</span></button>
+    <button class="btn gray small" id="adminLogoutBtn" style="display:none"><span data-i18n="admin_logout">Logout</span></button>
   </div>
+</div>
 
-  <!-- html2canvas pour export PNG -->
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
-  <!-- App JS principal (ESM Firebase) -->
-  <script type="module">
-    /* ========= (3) Firestore = source unique des données sensibles ========= */
-    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, setPersistence, browserLocalPersistence, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, collection, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+<!-- Utilitaire global: applique l’état lock/unlock partout -->
+<script>
+function applyLockUI(){
+  var isAdmin = false;
+  try{ isAdmin = sessionStorage.getItem('is_admin') === '1'; }catch(e){}
+  document.body.classList.toggle('locked', !isAdmin);
+  try{
+    var badge = document.getElementById('adminLockBadge');
+    if(badge){ badge.style.display = isAdmin ? 'none' : 'inline-flex'; }
+    var btnLogin = document.getElementById('adminLoginBtn');
+    var btnLogout = document.getElementById('adminLogoutBtn');
+    if(btnLogin) btnLogin.style.display = isAdmin ? 'none' : 'inline-flex';
+    if(btnLogout) btnLogout.style.display = isAdmin ? 'inline-flex' : 'none';
+  }catch(e){}
+  try{ togglePrivacyMask(); }catch(e){}
+}
+function togglePrivacyMask(){
+  const isAdmin = sessionStorage.getItem('is_admin') === '1';
+  document.documentElement.classList.toggle('auth', isAdmin);
+  document.documentElement.classList.toggle('noadmin', !isAdmin);
+}
+</script>
 
-    // (12) Whitelist multi-emails — complète avec tes autres adresses si besoin
-    const ALLOWED_EMAILS = [
-      "lithiumm31@gmail.com"
-    ];
+<script>
+/* ========= i18n ========= */
+const I18N = {
+  fr: {
+    title_support_dashboard: "Tableau de support",
+    subtitle_neon_glass_pro: "Neon Glass PRO",
+    support_ticket: "Support — Tickets",
+    week_from_to: (from,to) => `Semaine du ${from} au ${to}`,
+    export_png_btn: "Télécharger l'image (PNG)",
+    tab_generator: "Générateur",
+    tab_edit: "Éditer",
+    tab_links: "Liens",
+    gen_title: "Générateur",
+    gen_desc: "Entre une semaine <b>lundi → dimanche</b>. La commande produira <code>après:</code> = (début − 1 jour) et <code>avant:</code> = (fin + 1 jour).",
+    gen_input_from_placeholder: "Début (lundi)",
+    gen_input_to_placeholder: "Fin (dimanche)",
+    gen_generate_btn: "Générer",
+    gen_copy_btn: "Copier commande",
+    gen_result_placeholder: "Résultat…",
+    edit_title: "Annuaire — Édition",
+    add_member_btn: "+ Ajouter un membre",
+    add_form_tag: "Tag Discord",
+    add_form_tag_ph: "ex: nouveau_membre",
+    add_form_role: "Rôle",
+    add_form_langs: "Langues (abrév., ex: FR, ES, NL)",
+    add_form_langs_ph: "ex: FR, ES",
+    add_form_add: "Ajouter",
+    add_form_cancel: "Fermer",
+    links_title: "Liens utiles",
+    link_tickets: "Tickets log",
+    link_leader: "Leader chat",
+    link_sheet: "Google Sheet hebdo",
+    new_url_for_tickets: "Nouvelle URL pour “Tickets log”",
+    new_url_for_leader: "Nouvelle URL pour “Leader chat”",
+    new_url_for_sheet: "Nouvelle URL pour “Google Sheet hebdo”",
+    save_btn: "Sauver",
+    cancel_btn: "Annuler",
+    locked_label: "Verrouillé",
+    admin_login: "Admin (Google)",
+    admin_logout: "Logout",
+    alert_choose_dates: "Choisis deux dates (lundi → dimanche)",
+    alert_tag_empty: "Le tag Discord est requis.",
+    alert_tag_exists: "Ce tag existe déjà.",
+    alert_list_missing: "Liste introuvable.",
+    alert_export_failed: "Impossible de générer l'image sur ce navigateur."
+  },
+  en: {
+    title_support_dashboard: "Support Dashboard",
+    subtitle_neon_glass_pro: "Neon Glass PRO",
+    support_ticket: "Support — Tickets",
+    week_from_to: (from,to) => `Week of ${from} – ${to}`,
+    export_png_btn: "Download image (PNG)",
+    tab_generator: "Generator",
+    tab_edit: "Directory",
+    tab_links: "Useful links",
+    gen_title: "Generator",
+    gen_desc: "Enter a <b>Monday → Sunday</b> week. The command will output <code>after:</code> = (start − 1 day) and <code>before:</code> = (end + 1 day).",
+    gen_input_from_placeholder: "Start (Monday)",
+    gen_input_to_placeholder: "End (Sunday)",
+    gen_generate_btn: "Generate",
+    gen_copy_btn: "Copy command",
+    gen_result_placeholder: "Result…",
+    edit_title: "Directory — Edit",
+    add_member_btn: "+ Add a member",
+    add_form_tag: "Discord Tag",
+    add_form_tag_ph: "e.g., new_member",
+    add_form_role: "Role",
+    add_form_langs: "Languages (abbr., e.g., FR, ES, NL)",
+    add_form_langs_ph: "e.g., FR, ES",
+    add_form_add: "Add",
+    add_form_cancel: "Close",
+    links_title: "Useful links",
+    link_tickets: "Tickets log",
+    link_leader: "Leader chat",
+    link_sheet: "Weekly Google Sheet",
+    new_url_for_tickets: "New URL for “Tickets log”",
+    new_url_for_leader: "New URL for “Leader chat”",
+    new_url_for_sheet: "New URL for “Weekly Google Sheet”",
+    save_btn: "Save",
+    cancel_btn: "Cancel",
+    locked_label: "Locked",
+    admin_login: "Admin (Google)",
+    admin_logout: "Logout",
+    alert_choose_dates: "Pick two dates (Monday → Sunday)",
+    alert_tag_empty: "Discord tag is required.",
+    alert_tag_exists: "This tag already exists.",
+    alert_list_missing: "List not found.",
+    alert_export_failed: "Unable to generate the image on this browser."
+  }
+};
+I18N.fr.add_form_cancel='Fermer'; I18N.en.add_form_cancel='Close';
 
-    const FIREBASE_CONFIG = {
-      apiKey: "AIzaSyD0X6PY8Xwnt6GFjh4I9J2v65KBPnFPuEs",
-      authDomain: "support-app-64fca.firebaseapp.com",
-      projectId: "support-app-64fca",
-      storageBucket: "support-app-64fca.appspot.com",
-      messagingSenderId: "391759293249",
-      appId: "1:391759293249:web:e06e61accd103c98a60fc0",
-      measurementId: "G-PYE2M5LMNY"
+function setLang(lang){
+  localStorage.setItem('ui_lang', lang);
+  document.documentElement.lang = lang;
+  document.getElementById('lang-fr').classList.toggle('active', lang==='fr');
+  document.getElementById('lang-en').classList.toggle('active', lang==='en');
+  applyTranslations(lang);
+  try{
+    const f = localStorage.getItem('support_week_from');
+    const t = localStorage.getItem('support_week_to');
+    updateWeekLabel(lang, f, t);
+  }catch(e){}
+  try{ renderLinks(); }catch(e){}
+}
+function getLang(){
+  const v = localStorage.getItem('ui_lang');
+  if (v==='fr' || v==='en') return v;
+  return (navigator.language||'en').startsWith('fr') ? 'fr' : 'en';
+}
+function t(lang, key){ const dict = I18N[lang] || I18N.en; return dict[key] ?? key; }
+function openText(lang){ return (lang==='fr') ? 'Accéder' : 'Go'; }
+function applyTranslations(lang){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key = el.getAttribute('data-i18n');
+    el.innerHTML = t(lang, key);
+  });
+  document.querySelectorAll('[data-i18n-attr]').forEach(el=>{
+    const spec = el.getAttribute('data-i18n-attr');
+    spec.split(';').forEach(pair=>{
+      const [attr, key] = pair.split(':').map(s=>s.trim());
+      if(attr && key){ el.setAttribute(attr, t(lang, key)); }
+    });
+  });
+}
+
+/* ========= Tabs / Sheets ========= */
+const backdrop = document.getElementById('backdrop');
+const tabs = document.querySelectorAll('.tab');
+const sheets = {
+  'sheet-gen': document.getElementById('sheet-gen'),
+  'sheet-edit': document.getElementById('sheet-edit'),
+  'sheet-links': document.getElementById('sheet-links'),
+};
+let openId = null;
+function closeSheets(){ Object.values(sheets).forEach(s => s.classList.remove('open')); backdrop.classList.remove('show'); tabs.forEach(t => t.classList.remove('active')); openId = null; }
+function toggleSheet(id){
+  if (openId === id){ closeSheets(); return; }
+  Object.entries(sheets).forEach(([k,s]) => { if (k === id) s.classList.add('open'); else s.classList.remove('open'); });
+  backdrop.classList.add('show');
+  tabs.forEach(t => t.classList.toggle('active', t.getAttribute('data-sheet')===id));
+  openId = id;
+  window.scrollTo({top:0, behavior:'instant'});
+}
+tabs.forEach(t => t.addEventListener('click', () => toggleSheet(t.getAttribute('data-sheet')) ));
+backdrop.addEventListener('click', closeSheets);
+document.querySelectorAll('[data-close-sheet]').forEach(btn => btn.addEventListener('click', closeSheets));
+
+/* ========= Generator ========= */
+function fmtISO(d){const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const da=String(d.getDate()).padStart(2,'0');return y+'-'+m+'-'+da;}
+function addDays(d,days){return new Date(d.getTime()+days*86400000);}
+document.getElementById('genBtn').onclick=function(){
+  const lang = getLang();
+  const f=document.getElementById('dateFrom').value, t=document.getElementById('dateTo').value;
+  if(!f||!t){ alert(I18N[lang].alert_choose_dates); return; }
+  const df=new Date(f), dt=new Date(t);
+  const before=fmtISO(addDays(dt,1)), after=fmtISO(addDays(df,-1));
+  const out=(lang==='fr')?`dans:ticket-logs après:${after} avant:${before}`:`in:ticket-logs after:${after} before:${before}`;
+  document.getElementById('out').value=out;
+  try{ localStorage.setItem('support_week_from', f); localStorage.setItem('support_week_to', t); updateWeekLabel(lang, f, t); }catch(e){}
+};
+document.getElementById('copyBtn').onclick=async function(){
+  const el=document.getElementById('out');
+  try{
+    if(navigator.clipboard && window.isSecureContext){ await navigator.clipboard.writeText(el.value||''); }
+    else{ el.select(); document.execCommand('copy'); }
+  }catch(e){}
+};
+
+/* ========= Links (local + editable) ========= */
+const DEFAULT_LINKS = {
+  tickets: "https://discord.com/channels/1047415612495892480/1047415615616454661",
+  leader:  "https://discord.com/channels/1047415612495892480/1047415615616454661",
+  sheet:   "https://docs.google.com/spreadsheets/d/1f_NOkv3nh67LItsCEs7kL64QV9W1EH9oIR91PQzpmII/edit?usp=drivesdk"
+};
+function loadLinks(){
+  try{ const raw=localStorage.getItem('support_links_v92'); if(!raw) return {...DEFAULT_LINKS};
+       const o=JSON.parse(raw)||{}; return {tickets:o.tickets||DEFAULT_LINKS.tickets, leader:o.leader||DEFAULT_LINKS.leader, sheet:o.sheet||DEFAULT_LINKS.sheet}; }
+  catch(e){ return {...DEFAULT_LINKS}; }
+}
+function saveLinks(o){ localStorage.setItem('support_links_v92', JSON.stringify(o)); }
+let LINKS=loadLinks();
+function renderLinks(){
+  const lang = getLang();
+  const box=document.getElementById('linksList'); box.innerHTML='';
+  const rows=[
+    {key:'tickets', label:t(lang,'link_tickets'), editor:'#editorTickets', input:'#ticketsUrlInput'},
+    {key:'leader',  label:t(lang,'link_leader'),  editor:'#editorLeader',  input:'#leaderUrlInput'},
+    {key:'sheet',   label:t(lang,'link_sheet'),   editor:'#editorSheet',   input:'#sheetUrlInput'}
+  ];
+  rows.forEach(r=>{
+    const row=document.createElement('div'); row.className='link-row';
+    row.style.display='flex'; row.style.flexDirection='column'; row.style.alignItems='center'; row.style.gap='12px'; row.style.textAlign='center'; row.style.padding='16px';
+    const btnText = openText(lang);
+    const aria = (lang==='fr' ? 'Accéder ' : 'Go ') + r.label;
+    row.innerHTML=`
+      <div class="link-label"><b>${r.label}</b></div>
+      <div class="link-actions">
+        <a class="btn gray small" href="${LINKS[r.key]}" target="_blank" rel="noopener" aria-label="${aria}">${btnText}</a>
+        <button class="btn small" data-edit="${r.editor}" data-input="${r.input}" data-key="${r.key}" aria-label="Edit ${r.label}">✎</button>
+      </div>`;
+    box.appendChild(row);
+  });
+  box.style.display='grid'; box.style.gap='20px'; box.style.justifyItems='center';
+  box.querySelectorAll('button[data-edit]').forEach(b=>{
+    b.onclick=function(){
+      const key=this.getAttribute('data-key');
+      const ed=document.querySelector(this.getAttribute('data-edit'));
+      const input=document.querySelector(this.getAttribute('data-input'));
+      input.value=LINKS[key]||'';
+      document.querySelectorAll('#editorTickets,#editorLeader,#editorSheet').forEach(x=>x.style.display='none');
+      ed.style.display='block'; input.focus();
+    };
+  });
+}
+renderLinks();
+document.querySelectorAll('[data-close]').forEach(b=> b.onclick=function(){ const sel=this.getAttribute('data-close'); const ed=document.querySelector(sel); if(ed) ed.style.display='none'; });
+document.getElementById('saveTicketsUrl').onclick=function(){ const v=document.getElementById('ticketsUrlInput').value.trim(); if(!v) return; LINKS.tickets=v; saveLinks(LINKS); renderLinks(); document.getElementById('editorTickets').style.display='none'; };
+document.getElementById('saveLeaderUrl').onclick=function(){ const v=document.getElementById('leaderUrlInput').value.trim(); if(!v) return; LINKS.leader=v; saveLinks(LINKS); renderLinks(); document.getElementById('editorLeader').style.display='none'; };
+document.getElementById('saveSheetUrl').onclick=function(){ const v=document.getElementById('sheetUrlInput').value.trim(); if(!v) return; LINKS.sheet=v; saveLinks(LINKS); renderLinks(); document.getElementById('editorSheet').style.display='none'; };
+
+/* ========= Members & tickets (local, puis Firestore si admin) ========= */
+const DEFAULT_MEMBERS=[
+  {tag:'kiralithiumm', role:'Leader support', langs:''},
+  {tag:'tmtwister', role:'Senior support', langs:'NL, ES'},
+  {tag:'flying_around', role:'Senior support', langs:'RU'},
+  {tag:'dragonfly1491', role:'Senior support', langs:'FR'},
+  {tag:'zdctirou', role:'Trial support', langs:''}
+];
+function loadMembers(){
+  try{ const raw=localStorage.getItem('support_members_v90'); if(!raw) return DEFAULT_MEMBERS.slice(); const a=JSON.parse(raw); return Array.isArray(a)?a:DEFAULT_MEMBERS.slice(); }
+  catch(e){ return DEFAULT_MEMBERS.slice(); }
+}
+function saveMembers(a){ localStorage.setItem('support_members_v90', JSON.stringify(a)); }
+function loadTickets(){ try{ return JSON.parse(localStorage.getItem('support_tickets_v91')||'{}'); }catch(e){ return {}; } }
+function saveTickets(o){ localStorage.setItem('support_tickets_v91', JSON.stringify(o)); }
+
+let members = loadMembers();
+let tickets = loadTickets();
+
+function computeStatus(tag, n){
+  if(tag==='kiralithiumm') return {text:'—', cls:'neutral'};
+  if(tag==='dragonfly1491') return {text:'✅', cls:'ok'};
+  if(n>=7) return {text:'✅', cls:'ok'};
+  return {text:'⚠️', cls:'low'};
+}
+function renderReadOnly(){
+  const box = document.getElementById('roList');
+  box.innerHTML = '';
+  members.forEach(m => {
+    const n = Number((tickets[m.tag] ?? 0) || 0);
+    const s = computeStatus(m.tag, n);
+    const row = document.createElement('div');
+    row.className = 'member-ro';
+    row.innerHTML = `
+      <div>
+        <div class="tag">${m.tag}</div>
+        <div class="role">${m.role}${m.langs?(' — '+m.langs):''}</div>
+      </div>
+      <div class="tickets-badge">${isNaN(n)?0:n}</div>
+      <div class="status ${s.cls}">${s.text}</div>
+    `;
+    box.appendChild(row);
+  });
+}
+renderReadOnly();
+
+function renderMembers(){
+  const container=document.getElementById('membersContainer'); if(!container) return;
+  container.innerHTML='';
+  members.forEach((m, idx)=>{
+    const row=document.createElement('div'); row.className='member-ro';
+    const tVal = Number((tickets[m.tag] ?? 0) || 0);
+    row.innerHTML=`
+      <div>
+        <div class="tag-copy" style="display:inline-flex;align-items:center;gap:8px;">
+          <span class="tag tag-text">${m.tag}</span>
+          <button class="copy-tag" title="Copier" style="width:22px;height:22px;border-radius:6px;font-size:12px;line-height:1;background:rgba(255,255,255,.05);border:1px solid rgba(120,200,255,.18);color:var(--ink);cursor:pointer;">📋</button>
+        </div>
+        <div class="role">${m.role}${m.langs?(' — '+m.langs):''}</div>
+      </div>
+      <div class="tickets-badge">${isNaN(tVal)?0:tVal}</div>
+      <div class="actions">
+        <button class="btn gray small edit-btn">✎</button>
+        <button class="btn gray small delete-btn">Suppr.</button>
+      </div>
+    `;
+    container.appendChild(row);
+
+    row.querySelector('.edit-btn').onclick=function(){
+      const lang = getLang();
+      const dlg=document.createElement('div');
+      dlg.className='card'; dlg.style.padding='12px'; dlg.style.margin='10px 0';
+      dlg.innerHTML=`
+        <div class="grid grid-2">
+          <div><label>${t(lang,'add_form_tag')}</label><input class="e-tag" value="${m.tag}"></div>
+          <div><label>${t(lang,'add_form_role')}</label>
+            <select class="e-role">
+              ${['Leader support','Senior support','Support','Trial support'].map(r=>`<option ${r===m.role?'selected':''}>${r}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:8px"><label>${t(lang,'add_form_langs')}</label><input class="e-langs" value="${m.langs||''}" placeholder="${t(lang,'add_form_langs_ph')}"></div>
+        <div style="margin-top:8px"><label>Tickets</label><input class="e-tickets" type="number" min="0" value="${tVal}"></div>
+        <div class="actions" style="margin-top:8px"><button class="btn save2">${t(lang,'save_btn')}</button><button class="btn gray cancel2">${t(lang,'cancel_btn')}</button></div>
+      `;
+      row.after(dlg);
+      dlg.querySelector('.cancel2').onclick=()=>dlg.remove();
+      dlg.querySelector('.save2').onclick=()=>{
+        const newTag=dlg.querySelector('.e-tag').value.trim();
+        const newRole=dlg.querySelector('.e-role').value;
+        const newLangs=dlg.querySelector('.e-langs').value.trim();
+        const newT=Number(dlg.querySelector('.e-tickets').value||0);
+        if(!newTag){ alert(t(lang,'alert_tag_empty')); return; }
+        if(newTag!==m.tag){
+          const old = tickets[m.tag]; delete tickets[m.tag]; tickets[newTag] = (old ?? newT);
+        } else { tickets[m.tag]=newT; }
+        m.tag=newTag; m.role=newRole; m.langs=newLangs;
+        localStorage.setItem('support_members_v90', JSON.stringify(members));
+        localStorage.setItem('support_tickets_v91', JSON.stringify(tickets));
+        renderMembers(); renderReadOnly(); dlg.remove();
+      };
     };
 
-    const app   = getApps().length ? getApp() : initializeApp(FIREBASE_CONFIG);
-    const auth  = getAuth(app);
-    const db    = getFirestore(app);
-    const prov  = new GoogleAuthProvider();
-    prov.setCustomParameters({ prompt: 'select_account' });
+    row.querySelector('.delete-btn').onclick=function(){
+      const lang = getLang();
+      if(!confirm(lang==='fr'?'Supprimer ce membre ?':'Delete this member?')) return;
+      members.splice(idx,1);
+      localStorage.setItem('support_members_v90', JSON.stringify(members));
+      renderMembers(); renderReadOnly();
+    };
 
-    // (9) Connexion persistante
-    setPersistence(auth, browserLocalPersistence).catch(()=>{});
+    row.querySelector('.copy-tag').onclick = async function(){
+      const text = m.tag;
+      try{ await navigator.clipboard.writeText(text); this.textContent='✓'; setTimeout(()=> this.textContent='📋', 900); }
+      catch(e){ alert('Copie impossible / Copy failed'); }
+    };
+  });
+}
+renderMembers();
 
-    /* ========= State helpers ========= */
-    const el = (id)=>document.getElementById(id);
-    function setAdmin(on){
-      try{ sessionStorage.setItem('is_admin', on ? '1':'0'); }catch(e){}
-      document.documentElement.classList.toggle('auth', !!on);
-      document.documentElement.classList.toggle('noadmin', !on);
-      el('stateBadge').textContent = on ? 'Admin connecté' : 'Lecture seule';
-    }
-    function purgeLocal(){ // (4) purge locale au logout
-      try{ sessionStorage.clear(); }catch(e){}
-      try{ localStorage.clear(); }catch(e){}
-    }
+/* ========= Week label ========= */
+function fmt(d){ const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), da=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${da}`; }
+function mondayOf(d){ const x=new Date(d.getTime()); const day=x.getDay(); const diff=(day+6)%7; x.setDate(x.getDate()-diff); x.setHours(0,0,0,0); return x; }
+function sundayOf(mon){ const x=new Date(mon.getTime()); x.setDate(x.getDate()+6); return x; }
+function updateWeekLabel(lang, fromStr, toStr){
+  const el = document.getElementById('weekLabel'); if(!el) return;
+  if(fromStr && toStr){ el.textContent = I18N[lang].week_from_to(fromStr, toStr); }
+  else { const mon=mondayOf(new Date()); const sun=sundayOf(mon); el.textContent = I18N[lang].week_from_to(fmt(mon), fmt(sun)); }
+}
 
-    /* ========= (3) API: loadData/saveData (Firestore only) ========= */
-    async function loadData(){
-      // Lecture minimaliste: links, members, tickets
-      // Tous sensibles → lus uniquement en admin
-      const linksDoc = await getDoc(doc(db, "links", "config")).catch(()=>null);
-      const membersQ = await getDocs(collection(db, "members")).catch(()=>null);
-      const ticketsQ = await getDocs(collection(db, "tickets")).catch(()=>null);
-
-      const LINKS = linksDoc?.exists() ? linksDoc.data() : {};
-      const members = membersQ ? membersQ.docs.map(d=>({ id:d.id, ...d.data() })) : [];
-      const tickets = {};
-      if(ticketsQ){ ticketsQ.forEach(d=> tickets[d.id] = (d.data()?.count)||0 ); }
-
-      renderReadOnly(members, tickets);
-      return { LINKS, members, tickets };
-    }
-
-    async function saveData(path, data){
-      // Ecriture générique (admin uniquement)
-      // path {type:'links'|'tickets', id?:string}
-      if(path.type === 'links'){
-        await setDoc(doc(db, "links", "config"), data, { merge:true });
-      }else if(path.type === 'tickets' && path.id){
-        await setDoc(doc(db, "tickets", path.id), { count: Number(data.count||0) }, { merge:true });
-      }
-      // on pourrait rajouter: members add/update/delete ici (selon tes actions UI)
-    }
-
-    /* ========= UI: rendu (placeholders par défaut) ========= */
-    function computeStatus(tag, n){
-      if(n>=7) return {text:'✅', cls:'ok'}; // règle simple par défaut
-      return {text:'⚠️', cls:'low'};
-    }
-
-    function renderReadOnly(members=[], tickets={}){
-      const box = el('roList');
-      box.textContent = '';
-      if(!Array.isArray(members) || members.length===0){
-        // Placeholders si rien / non-admin ou pas encore chargé
-        const row = document.createElement('div');
-        row.className = 'member-ro';
-        row.innerHTML = `
-          <div><div class="tag">—</div><div class="role">—</div></div>
-          <div class="tickets-badge">0</div><div class="status neutral">—</div>`;
-        box.appendChild(row);
-        return;
-      }
-      members.forEach(m=>{
-        const n = Number((tickets[m.tag] ?? 0) || 0);
-        const s = computeStatus(m.tag, n);
-        const row = document.createElement('div');
-        row.className = 'member-ro';
-        // pas d’innerHTML avec externe; ici on contrôle les champs (tag/role/langs) → texte
-        const left = document.createElement('div');
-        const tag = document.createElement('div'); tag.className='tag'; tag.textContent = m.tag||'—';
-        const role= document.createElement('div'); role.className='role'; role.textContent = [m.role, m.langs].filter(Boolean).join(' — ') || '—';
-        left.appendChild(tag); left.appendChild(role);
-
-        const badge = document.createElement('div'); badge.className='tickets-badge'; badge.textContent = isNaN(n)?'0':String(n);
-        const st = document.createElement('div'); st.className='status ' + (s.cls||'neutral'); st.textContent = s.text||'—';
-
-        row.appendChild(left); row.appendChild(badge); row.appendChild(st);
-        box.appendChild(row);
-      });
-    }
-
-    /* ========= Auth UI ========= */
-    function wireAuthButtons(){
-      const login  = el('loginBtn');
-      const logout = el('logoutBtn');
-      if(login){
-        login.addEventListener('click', async ()=>{
-          try{
-            const res = await signInWithPopup(auth, prov);
-            const email = res?.user?.email || '';
-            if(ALLOWED_EMAILS.map(x=>x.toLowerCase()).includes(email.toLowerCase())){
-              setAdmin(true);
-              await loadData(); // (3) charger après login
-            }else{
-              alert('Compte non autorisé: ' + (email||'inconnu'));
-              await signOut(auth);
-              setAdmin(false);
-            }
-          }catch(e){
-            console.error(e);
-            alert('Connexion Google échouée.');
-            setAdmin(false);
-          }
-        });
-      }
-      if(logout){
-        logout.addEventListener('click', async ()=>{
-          try{ await signOut(auth); }catch(e){}
-          purgeLocal();          // (4) purge totale
-          setAdmin(false);       // retour état lecture seule
-          renderReadOnly([],{}); // placeholders
-        });
-      }
-    }
-
-    /* ========= Etat initial (8: verrou par défaut) + (6) badge/ctas ========= */
-    (function initLock(){
-      const isAdmin = sessionStorage.getItem('is_admin') === '1';
-      setAdmin(!!isAdmin);
-      wireAuthButtons();
-      // Pas de chargement de données tant qu’on n’est pas admin
-      if(isAdmin){ loadData().catch(()=>{}); }
-    })();
-
-    /* ========= Confort/robustesse (10, 13 partiels NOW scope) ========= */
-    // Mini notifier (toasts light)
-    function toast(msg){
-      const t = document.createElement('div');
-      t.textContent = msg;
-      Object.assign(t.style, {
-        position:'fixed', left:'50%', transform:'translateX(-50%)',
-        bottom:'80px', background:'rgba(0,0,0,.7)', color:'#fff',
-        padding:'8px 12px', borderRadius:'10px', zIndex:10001, fontWeight:'700'
-      });
-      document.body.appendChild(t);
-      setTimeout(()=>{ t.remove(); }, 1400);
-    }
-
-    // Export PNG (inchangé, robustifié)
-    import "https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js";
-    el('exportPngBtn')?.addEventListener('click', async ()=>{
-      const cap = el('captureArea');
-      if(!cap) return;
-      let bg = getComputedStyle(document.body).backgroundColor || '#0b1728';
-      if(!bg || bg==='transparent' || bg==='rgba(0, 0, 0, 0)') bg='#0b1728';
-      const canvas = await html2canvas(cap, { backgroundColor:bg, scale: Math.max(1, window.devicePixelRatio||1) }).catch(()=>null);
-      if(!canvas){ alert("Impossible de générer l'image sur ce navigateur."); return; }
+/* ========= Export PNG ========= */
+document.getElementById('exportPngBtn').addEventListener('click', async function(){
+  const lang = getLang();
+  const cap = document.getElementById('captureArea');
+  if(!cap){ alert(I18N[lang].alert_list_missing); return; }
+  cap.scrollIntoView({block:'nearest'});
+  let bg = getComputedStyle(document.body).backgroundColor || '';
+  if(!bg || bg==='transparent' || bg==='rgba(0, 0, 0, 0)') bg = '#0b1728';
+  const scale = Math.max(1, window.devicePixelRatio || 1);
+  try{
+    const canvas = await html2canvas(cap, { backgroundColor:bg, scale, useCORS:true, logging:false, windowWidth:document.documentElement.scrollWidth, windowHeight:document.documentElement.scrollHeight });
+    const isiOS = /iP(hone|od|ad)/.test(navigator.platform) || (navigator.userAgent.includes('Mac') && 'ontouchend' in document);
+    if (isiOS){
+      const data = canvas.toDataURL('image/png');
+      const win = window.open();
+      if (win){ win.document.write('<img src="'+data+'" style="width:100%">'); }
+      else { alert("Image générée. Autorise les fenêtres pop up pour l'afficher."); }
+    } else {
       if(canvas.toBlob){
-        canvas.toBlob((blob)=>{
+        canvas.toBlob(function(blob){
           const a = document.createElement('a');
           a.download = 'support_table.png';
           a.href = URL.createObjectURL(blob);
           document.body.appendChild(a); a.click();
           setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 800);
         }, 'image/png');
-      }else{
+      } else {
         const a = document.createElement('a');
-        a.download='support_table.png';
+        a.download = 'support_table.png';
         a.href = canvas.toDataURL('image/png');
         document.body.appendChild(a); a.click();
-        setTimeout(()=>a.remove(), 800);
+        setTimeout(()=> a.remove(), 800);
       }
-      toast('Export PNG ✓');
-    });
+    }
+  }catch(err){ console.error(err); alert(I18N[lang].alert_export_failed); }
+});
 
-    // (13) Bouton “Actualiser les données” (admin)
-    el('refreshBtn')?.addEventListener('click', async ()=>{
-      if(sessionStorage.getItem('is_admin')==='1'){
-        await loadData().catch(()=>{ toast('Erreur ×'); });
-        toast('Actualisé ✓');
-      }else{
-        toast('Lecture seule');
-      }
-    });
+/* ========= Init (lang + add member UI) ========= */
+(function init(){
+  const lang = getLang();
+  document.getElementById('lang-fr').addEventListener('click', ()=>setLang('fr'));
+  document.getElementById('lang-en').addEventListener('click', ()=>setLang('en'));
+  setLang(lang);
 
-    // Lang (squelette i18n)
-    el('lang-fr')?.addEventListener('click', ()=>{ document.documentElement.lang='fr'; toast('FR'); });
-    el('lang-en')?.addEventListener('click', ()=>{ document.documentElement.lang='en'; toast('EN'); });
+  // Add form show/hide
+  try {
+    const form = document.getElementById('addForm');
+    const addBtn = document.getElementById('addBtn');
+    const cancelBtn = document.getElementById('cancelAddBtn');
+    if (addBtn && form) addBtn.addEventListener('click', ()=>{ form.style.display='block'; });
+    if (cancelBtn && form) cancelBtn.addEventListener('click', ()=>{ form.style.display='none'; });
+  } catch (e) {}
 
-  </script>
+  // Add member
+  try{
+    const confirmAddBtn = document.getElementById('confirmAddBtn');
+    const addTag = document.getElementById('addTag');
+    const addRole = document.getElementById('addRole');
+    const addLangs = document.getElementById('addLangs');
+    const addForm = document.getElementById('addForm');
+    if(confirmAddBtn && addTag && addRole && addLangs && addForm){
+      confirmAddBtn.addEventListener('click', ()=>{
+        const lang = getLang();
+        const tag = (addTag.value||'').trim();
+        const role = (addRole.value||'Support').trim();
+        const langs = (addLangs.value||'').trim();
+        if(!tag){ alert(I18N[lang].alert_tag_empty || 'Tag required'); return; }
+        if(Array.isArray(members) && members.some(m => (m && (m.tag||'').toLowerCase()) === tag.toLowerCase())){ alert(I18N[lang].alert_tag_exists || 'This tag already exists.'); return; }
+        members.push({tag, role, langs});
+        try{ localStorage.setItem('support_members_v90', JSON.stringify(members)); }catch(e){}
+        renderMembers(); renderReadOnly();
+        addTag.value=''; addRole.value='Support'; addLangs.value=''; addForm.style.display='none';
+      });
+    }
+  }catch(e){}
+  renderLinks();
+})();
+</script>
+
+<!-- Firebase (Google Auth) -->
+<script type="module">
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+/* ---- Config ---- */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyD0X6PY8Xwnt6GFjh4I9J2v65KBPnFPuEs",
+  authDomain: "support-app-64fca.firebaseapp.com",
+  projectId: "support-app-64fca",
+  storageBucket: "support-app-64fca.appspot.com",
+  messagingSenderId: "391759293249",
+  appId: "1:391759293249:web:e06e61accd103c98a60fc0",
+  measurementId: "G-PYE2M5LMNY"
+};
+const ALLOWED_EMAILS = ["lithiumm31@gmail.com"];
+
+const appFb = getApps().length ? getApp() : initializeApp(FIREBASE_CONFIG);
+const auth = getAuth(appFb);
+const provider = new GoogleAuthProvider();
+provider.setCustomParameters({ prompt: 'select_account' });
+
+setPersistence(auth, browserLocalPersistence).catch(()=>{});
+
+function isAllowed(email){ return !!email && ALLOWED_EMAILS.map(e=>e.trim().toLowerCase()).includes(email.trim().toLowerCase()); }
+function setAdminSession(on){
+  try{ sessionStorage.setItem('is_admin', on ? '1':'0'); }catch(e){}
+  if(typeof applyLockUI==='function') applyLockUI();
+  if(typeof togglePrivacyMask==='function') togglePrivacyMask();
+}
+
+/* Admin buttons */
+const btnLogin = document.getElementById('adminLoginBtn');
+const btnLogout = document.getElementById('adminLogoutBtn');
+if(btnLogin){
+  btnLogin.onclick = async () => {
+    try{
+      const res = await signInWithPopup(auth, provider);
+      const email = res.user?.email;
+      if(isAllowed(email)){ setAdminSession(true); }
+      else{ alert((getLang()==='fr'?'Compte non autorisé: ':'Not authorized: ')+ (email||'unknown')); await signOut(auth); setAdminSession(false); }
+    }catch(err){ console.error(err); alert(getLang()==='fr'?'Échec de connexion Google.':'Google sign-in failed.'); setAdminSession(false); }
+  };
+}
+if(btnLogout){
+  btnLogout.onclick = async () => {
+    try{ await signOut(auth); }catch(e){}
+    try{ sessionStorage.removeItem('is_admin'); localStorage.removeItem('support_members_v90'); localStorage.removeItem('support_tickets_v91'); }catch(e){}
+    setAdminSession(false);
+  };
+}
+
+/* Auth state */
+onAuthStateChanged(auth, (user)=>{
+  if(user && isAllowed(user.email)){ setAdminSession(true); }
+  else{ setAdminSession(false); }
+});
+</script>
+
+<!-- Firestore realtime (shared data) -->
+<script type="module">
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, setDoc, onSnapshot, collection, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyD0X6PY8Xwnt6GFjh4I9J2v65KBPnFPuEs",
+  authDomain: "support-app-64fca.firebaseapp.com",
+  projectId: "support-app-64fca",
+  storageBucket: "support-app-64fca.appspot.com",
+  messagingSenderId: "391759293249",
+  appId: "1:391759293249:web:e06e61accd103c98a60fc0",
+  measurementId: "G-PYE2M5LMNY"
+};
+
+let db=null, app=null, auth=null, firestoreReady=false;
+try{ app = getApps().length ? getApp() : initializeApp(FIREBASE_CONFIG); auth = getAuth(app); db = getFirestore(app); firestoreReady=true; }
+catch(e){ console.warn("Firestore not initialized (fallback localStorage).", e); firestoreReady=false; }
+
+window.LINKS = window.LINKS || {
+  tickets: "https://discord.com/channels/1047415612495892480/1047415615616454661",
+  leader:  "https://discord.com/channels/1047415612495892480/1047415615616454661",
+  sheet:   "https://docs.google.com/spreadsheets/d/1f_NOkv3nh67LItsCEs7kL64QV9W1EH9oIR91PQzpmII/edit?usp=drivesdk"
+};
+window.members = window.members || [];
+window.tickets = window.tickets || {};
+window.supportWeek = window.supportWeek || { from:null, to:null };
+
+function lsGet(key, def){ try{ const v=localStorage.getItem(key); return v?JSON.parse(v):def; }catch(e){ return def; } }
+function lsSet(key,val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
+
+function useLocalFallback(){
+  window.LINKS = lsGet('support_links_v92', window.LINKS);
+  window.members = lsGet('support_members_v90', window.members);
+  window.tickets = lsGet('support_tickets_v91', window.tickets);
+  try{ const f=localStorage.getItem('support_week_from'); const t=localStorage.getItem('support_week_to'); window.supportWeek = {from:f, to:t}; }catch(e){}
+  try{ renderLinks(); }catch(e){}
+  try{ renderMembers(); renderReadOnly(); }catch(e){}
+  try{ const lang=(localStorage.getItem('ui_lang')||'fr'); updateWeekLabel(lang, window.supportWeek.from, window.supportWeek.to); }catch(e){}
+}
+
+async function ensureDocs(){
+  if(!firestoreReady) return;
+  await setDoc(doc(db, "links", "config"), window.LINKS, { merge:true });
+  await setDoc(doc(db, "ui", "state"), { from: window.supportWeek.from || null, to: window.supportWeek.to || null }, { merge:true });
+}
+
+function startRealtime(){
+  if(!firestoreReady){ useLocalFallback(); return; }
+
+  onSnapshot(doc(db, "links", "config"), (snap)=>{ if(snap.exists()){ window.LINKS = snap.data()||{}; try{ renderLinks(); }catch(e){} } });
+  onSnapshot(collection(db, "members"), (qs)=>{ window.members = qs.docs.map(d=>({ id:d.id, ...d.data() })); try{ renderMembers(); renderReadOnly(); }catch(e){} });
+  onSnapshot(collection(db, "tickets"), (qs)=>{ const map={}; qs.forEach(d=> map[d.id]=(d.data()?.count)||0 ); window.tickets=map; try{ renderReadOnly(); }catch(e){} });
+  onSnapshot(doc(db, "ui", "state"), (snap)=>{ const lang=(localStorage.getItem('ui_lang')||'fr'); if(snap.exists()){ const {from,to}=snap.data(); window.supportWeek={from:from||null, to:to||null}; try{ updateWeekLabel(lang, from, to); }catch(e){} } });
+}
+
+/* Writes */
+window.saveLinkFirestore = async function(key, value){
+  if(!firestoreReady){ const L={...window.LINKS, [key]: value}; lsSet('support_links_v92', L); window.LINKS=L; try{ renderLinks(); }catch(e){}; return; }
+  await setDoc(doc(db, "links", "config"), { [key]: value }, { merge: true });
+};
+window.addMemberFirestore = async function(tag, role, langs){
+  if(!firestoreReady){ const arr=[...window.members,{tag,role,langs}]; lsSet('support_members_v90', arr); window.members=arr; renderMembers(); renderReadOnly(); return; }
+  await addDoc(collection(db, "members"), { tag, role, langs });
+};
+window.updateMemberFirestore = async function(id, fields){
+  if(!firestoreReady){
+    const i = window.members.findIndex(m=>m.id===id || m.tag===fields.tag);
+    if(i>=0){ window.members[i] = {...window.members[i], ...fields}; lsSet('support_members_v90', window.members); renderMembers(); renderReadOnly(); }
+    return;
+  }
+  if(!id){ const m = window.members.find(m=>m.tag===fields.oldTag); if(!m) return; id = m.id; }
+  await updateDoc(doc(db, "members", id), fields);
+};
+window.deleteMemberFirestore = async function(id){
+  if(!firestoreReady){ const arr=window.members.filter(m=>m.id!==id); lsSet('support_members_v90', arr); window.members=arr; renderMembers(); renderReadOnly(); return; }
+  await deleteDoc(doc(db, "members", id));
+};
+window.setTicketsFirestore = async function(tag, n){
+  if(!firestoreReady){ const map={...window.tickets, [tag]: n}; lsSet('support_tickets_v91', map); window.tickets=map; renderReadOnly(); return; }
+  await setDoc(doc(db, "tickets", tag), { count: n }, { merge: true });
+};
+window.saveWeekFirestore = async function(from, to){
+  if(!firestoreReady){ try{ localStorage.setItem('support_week_from', from); localStorage.setItem('support_week_to', to); }catch(e){}; return; }
+  await setDoc(doc(db, "ui", "state"), { from, to }, { merge: true });
+};
+
+/* Wire UI → Firestore/local */
+function wireUI(){
+  const saveTicketsUrl = document.getElementById('saveTicketsUrl');
+  const saveLeaderUrl = document.getElementById('saveLeaderUrl');
+  const saveSheetUrl = document.getElementById('saveSheetUrl');
+  if(saveTicketsUrl) saveTicketsUrl.onclick = async ()=>{ const v=(document.getElementById('ticketsUrlInput').value||'').trim(); if(!v) return; await window.saveLinkFirestore('tickets', v); document.getElementById('editorTickets').style.display='none'; };
+  if(saveLeaderUrl) saveLeaderUrl.onclick = async ()=>{ const v=(document.getElementById('leaderUrlInput').value||'').trim(); if(!v) return; await window.saveLinkFirestore('leader', v); document.getElementById('editorLeader').style.display='none'; };
+  if(saveSheetUrl) saveSheetUrl.onclick = async ()=>{ const v=(document.getElementById('sheetUrlInput').value||'').trim(); if(!v) return; await window.saveLinkFirestore('sheet', v); document.getElementById('editorSheet').style.display='none'; };
+
+  const confirmAddBtn = document.getElementById('confirmAddBtn');
+  if(confirmAddBtn) confirmAddBtn.onclick = async ()=>{ const tag=(document.getElementById('addTag').value||'').trim(); const role=(document.getElementById('addRole').value||'Support').trim(); const langs=(document.getElementById('addLangs').value||'').trim(); if(!tag){ alert('Tag requis'); return; } if(window.members.some(m => (m.tag||'').toLowerCase()===tag.toLowerCase())){ alert('Ce tag existe déjà.'); return; } await window.addMemberFirestore(tag, role, langs); document.getElementById('addTag').value=''; document.getElementById('addRole').value='Support'; document.getElementById('addLangs').value=''; document.getElementById('addForm').style.display='none'; };
+
+  document.addEventListener('click', async (e)=>{
+    if(e.target && e.target.classList && e.target.classList.contains('save2')){
+      const dlg = e.target.closest('.card'); if(!dlg) return;
+      const newTag=dlg.querySelector('.e-tag')?.value?.trim()||''; const newRole=dlg.querySelector('.e-role')?.value||'Support'; const newLangs=dlg.querySelector('.e-langs')?.value?.trim()||''; const newT=Number(dlg.querySelector('.e-tickets')?.value||0);
+      const row = dlg.previousElementSibling; const oldTag = row?.querySelector('.tag-text')?.textContent?.trim();
+      const member = window.members.find(m => (m.tag===oldTag)); const id = member?.id;
+      if(newTag && newTag!==oldTag){ const oldCount = window.tickets[oldTag]||newT; await window.setTicketsFirestore(newTag, oldCount); } else { await window.setTicketsFirestore(oldTag, newT); }
+      await window.updateMemberFirestore(id, { tag:newTag||oldTag, role:newRole, langs:newLangs, oldTag });
+      dlg.remove();
+    }
+  });
+
+  document.addEventListener('click', async (e)=>{
+    if(e.target && e.target.classList && e.target.classList.contains('delete-btn')){
+      const row = e.target.closest('.member-ro'); const tagTxt = row?.querySelector('.tag-text, .tag')?.textContent?.trim();
+      const m = window.members.find(x=>x.tag===tagTxt); const id = m?.id;
+      const ok = confirm((localStorage.getItem('ui_lang')||'fr')==='fr'?'Supprimer ce membre ?':'Delete this member?');
+      if(!ok) return; if(id){ await window.deleteMemberFirestore(id); }
+    }
+  });
+
+  document.getElementById('genBtn')?.addEventListener('click', async ()=>{
+    const f=document.getElementById('dateFrom').value, t=document.getElementById('dateTo').value; if(f && t){ await window.saveWeekFirestore(f, t); }
+  });
+
+  document.getElementById('refreshBtn')?.addEventListener('click', ()=>{
+    // En mode Firestore, onSnapshot tient à jour. Ce bouton sert de “soft rerender”.
+    try{ renderMembers(); renderReadOnly(); renderLinks(); }catch(e){}
+  });
+}
+
+/* Start after auth (ou fallback) */
+if(firestoreReady){
+  onAuthStateChanged(auth, (user)=>{ if(user){ ensureDocs().then(()=>{ startRealtime(); wireUI(); }); } else { useLocalFallback(); wireUI(); } });
+}else{ useLocalFallback(); wireUI(); }
+</script>
+
+<!-- Verrou par défaut au boot -->
+<script>
+(function(){
+  function setLockedState(locked){
+    try{ if (locked) sessionStorage.setItem('is_admin','0'); else sessionStorage.setItem('is_admin','1'); }catch(e){}
+    try{ applyLockUI(); }catch(e){}
+    try{ document.documentElement.classList.toggle('auth', !locked); document.documentElement.classList.toggle('noadmin', locked); }catch(e){}
+  }
+  try{ const flag = sessionStorage.getItem('is_admin'); setLockedState(flag==='1'?false:true); }catch(e){ setLockedState(true); }
+})();
+</script>
 </body>
-</html>
+  </html>
