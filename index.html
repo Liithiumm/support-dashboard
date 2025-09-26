@@ -559,18 +559,17 @@ document.getElementById('saveTicketsUrl').onclick=function(){ const v=document.g
 document.getElementById('saveLeaderUrl').onclick=function(){ const v=document.getElementById('leaderUrlInput').value.trim(); if(!v) return; LINKS.leader=v; saveLinks(LINKS); renderLinks(); document.getElementById('editorLeader').style.display='none'; };
 document.getElementById('saveSheetUrl').onclick=function(){ const v=document.getElementById('sheetUrlInput').value.trim(); if(!v) return; LINKS.sheet=v; saveLinks(LINKS); renderLinks(); document.getElementById('editorSheet').style.display='none'; };
 
-/* ========= Members & tickets (local, puis Firestore si admin) ========= */
-const DEFAULT_MEMBERS=[
-  {tag:'kiralithiumm', role:'Leader support', langs:''},
-  {tag:'tmtwister', role:'Senior support', langs:'NL, ES'},
-  {tag:'flying_around', role:'Senior support', langs:'RU'},
-  {tag:'dragonfly1491', role:'Senior support', langs:'FR'},
-  {tag:'zdctirou', role:'Trial support', langs:''}
-];
+  /* ======= Members & tickets (local, puis Firestore si admin) ======= */
+const DEFAULT_MEMBERS = [];
+
 function loadMembers(){
-  try{ const raw=localStorage.getItem('support_members_v90'); if(!raw) return DEFAULT_MEMBERS.slice(); const a=JSON.parse(raw); return Array.isArray(a)?a:DEFAULT_MEMBERS.slice(); }
-  catch(e){ return DEFAULT_MEMBERS.slice(); }
-}
+    const raw = localStorage.getItem('support_members_v90');
+    if(!raw) return DEFAULT_MEMBERS.slice();
+    return JSON.parse(raw);
+  } catch(e) {
+    return DEFAULT_MEMBERS.slice();
+  }
+                                                                                                          
 function saveMembers(a){ localStorage.setItem('support_members_v90', JSON.stringify(a)); }
 function loadTickets(){ try{ return JSON.parse(localStorage.getItem('support_tickets_v91')||'{}'); }catch(e){ return {}; } }
 function saveTickets(o){ localStorage.setItem('support_tickets_v91', JSON.stringify(o)); }
@@ -578,10 +577,10 @@ let members = loadMembers();
 let tickets = loadTickets();
 
 function computeStatus(tag, n){
-  if(tag==='kiralithiumm') return {text:'—', cls:'neutral'};
-  if(tag==='dragonfly1491') return {text:'✅', cls:'ok'};
-  if(n>=7) return {text:'✅', cls:'ok'};
-  return {text:'⚠️', cls:'low'};
+  const x = Number(n) || 0;
+  if (x >= 7) return { text:'✅', cls:'ok' };     // bon
+  if (x === 0) return { text:'⚠️', cls:'low' };  // faible
+  return { text:'—', cls:'neutral' };            // neutre
 }
 function renderReadOnly(){
   const box = document.getElementById('roList');
