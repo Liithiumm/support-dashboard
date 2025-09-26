@@ -563,6 +563,7 @@ document.getElementById('saveSheetUrl').onclick=function(){ const v=document.get
 const DEFAULT_MEMBERS = [];
 
 function loadMembers(){
+  try {
     const raw = localStorage.getItem('support_members_v90');
     if(!raw) return DEFAULT_MEMBERS.slice();
     return JSON.parse(raw);
@@ -571,7 +572,13 @@ function loadMembers(){
   }
                                                                                                           
 function saveMembers(a){ localStorage.setItem('support_members_v90', JSON.stringify(a)); }
-function loadTickets(){ try{ return JSON.parse(localStorage.getItem('support_tickets_v91')||'{}'); }catch(e){ return {}; } }
+function loadTickets(){
+  try {
+    return JSON.parse(localStorage.getItem('support_tickets_v91') || '{}');
+  } catch(e) {
+    return {};
+  }
+}
 function saveTickets(o){ localStorage.setItem('support_tickets_v91', JSON.stringify(o)); }
 let members = loadMembers();
 let tickets = loadTickets();
@@ -980,4 +987,4 @@ if(firestoreReady){
 })();
 </script>
 </body>
-  </html>
+          </html>
