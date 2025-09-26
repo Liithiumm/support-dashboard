@@ -412,6 +412,8 @@ a.btn{ text-decoration: none !important; }
   .admin-cta{ bottom: 98px; }
 }
 
+
+.locked [data-admin]{pointer-events:none;opacity:.6;filter:grayscale(.2)}
 </style>
 </head>
 <body>
@@ -987,75 +989,6 @@ document.getElementById('exportPngBtn').addEventListener('click', async function
 // Minimal handler: close Add Member form
 try{document.getElementById('cancelAddBtn').onclick=function(){document.getElementById('addForm').style.display='none';};}catch(e){}
 
-/* ========= Admin lock (simple password gate) ========= */
-/* Change this passphrase to your own secret: */
-const ADMIN_PASSPHRASE = "support2024";
-/* Derive a SHA-256 so we don't store it in plain text. */
-async function sha256(text){
-  const enc = new TextEncoder().encode(text);
-  const digest = await crypto.subtle.digest('SHA-256', enc);
-  return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('');
-}
-let ADMIN_HASH = null;
-(async()=>{ ADMIN_HASH = await sha256(ADMIN_PASSPHRASE); })();
-
-function isAdmin(){
-  try{ return sessionStorage.getItem('is_admin') === '1'; }catch(e){ return false; }
-}
-
-function applyLockUI(){
-  const locked = !isAdmin();
-  document.body.classList.toggle('locked', locked);
-  const badge = document.getElementById('adminLockBadge');
-  const btnLogin = document.getElementById('adminLoginBtn');
-  const btnLogout = document.getElementById('adminLogoutBtn');
-  if (badge) badge.style.display = locked ? 'inline-flex' : 'none';
-  if (btnLogin) btnLogin.style.display = locked ? 'inline-flex' : 'none';
-  if (btnLogout) btnLogout.style.display = locked ? 'none' : 'inline-flex';
-}
-
-async function promptLogin(){
-  const lang = getLang();
-  const ask = (lang==='fr') ? I18N.fr.admin_prompt : I18N.en.admin_prompt;
-  const bad = (lang==='fr') ? I18N.fr.admin_badpass : I18N.en.admin_badpass;
-  const pass = prompt(ask);
-  if (!pass) return;
-  const hash = await sha256(pass);
-  if (hash === ADMIN_HASH){
-    try{ sessionStorage.setItem('is_admin','1'); }catch(e){}
-    applyLockUI();
-  } else {
-    alert(bad);
-  }
-}
-
-function logoutAdmin(){
-  try{ sessionStorage.removeItem('is_admin'); }catch(e){}
-  applyLockUI();
-}
-
-// Intercept tabs when locked
-(function guardTabs(){
-  document.querySelectorAll('.tab').forEach(t => {
-    t.addEventListener('click', (ev)=>{
-      if(!isAdmin()){
-        ev.preventDefault();
-        ev.stopPropagation();
-        promptLogin();
-      }
-    }, true);
-  });
-})();
-
-// Buttons
-document.addEventListener('DOMContentLoaded', ()=>{
-  const btnLogin = document.getElementById('adminLoginBtn');
-  const btnLogout = document.getElementById('adminLogoutBtn');
-  if(btnLogin) btnLogin.addEventListener('click', promptLogin);
-  if(btnLogout) btnLogout.addEventListener('click', logoutAdmin);
-  applyLockUI();
-});
-
 /* ========= Init ========= */
 (function init(){
   const lang = getLang();
@@ -1133,7 +1066,7 @@ const FIREBASE_CONFIG = {
 };
 
 /* ---- Admin whitelist (emails allowed to unlock the app) ---- */
-const ALLOWED_EMAILS = [ "lithiumm31@gmail.com" ];
+const ALLOWED_EMAILS = ["lithiumm31@gmail.com"];
 
 // Init Firebase
 const appFb = initializeApp(FIREBASE_CONFIG);
@@ -1444,6 +1377,55 @@ if(firestoreReady){
   useLocalFallback();
   wireUI();
 }
+</script>
+
+<script type="module">
+// Ensure Admin buttons call new promptLogin / logout
+try{
+  const btnLogin = document.getElementById('adminLoginBtn');
+  const btnLogout = document.getElementById('adminLogoutBtn');
+  if(btnLogin){ btnLogin.onclick = promptLogin; }
+  if(btnLogout){ btnLogout.onclick = async ()=>{ try{ await signOut(auth);}catch(e){} try{ sessionStorage.removeItem('is_admin'); }catch(e){} applyLockUI(); }; }
+}catch(e){}
+</script>
+
+<script type="module">
+// Ensure locked by default until an allowed Google user is authenticated
+(function(){
+  function setLockedState(locked){
+    try{
+      if (locked) sessionStorage.setItem('is_admin','0'); else sessionStorage.setItem('is_admin','1');
+    }catch(e){}
+    try{
+      if (typeof applyLockUI === 'function') applyLockUI();
+    }catch(e){}
+    try{
+      document.body.classList.toggle('locked', locked);
+    }catch(e){}
+  }
+
+  // Lock at start unless a previous admin flag is present and true
+  try{
+    const flag = sessionStorage.getItem('is_admin');
+    if (flag !== '1') setLockedState(true);
+  }catch(e){
+    setLockedState(true);
+  }
+
+  // If Firebase auth is present, keep lock synced to allowed user
+  try{
+    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js").then(mod => {
+      const { onAuthStateChanged } = mod;
+      if (typeof onAuthStateChanged === 'function' && typeof auth !== 'undefined'){
+        onAuthStateChanged(auth, (user)=>{
+          const email = user?.email || "";
+          const allowed = (Array.isArray(ALLOWED_EMAILS) && ALLOWED_EMAILS.includes(email));
+          setLockedState(!allowed);
+        });
+      }
+    }).catch(()=>{});
+  }catch(e){}
+})();
 </script>
 
 </body>
