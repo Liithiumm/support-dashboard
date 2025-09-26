@@ -1480,5 +1480,20 @@ document.addEventListener('DOMContentLoaded', togglePrivacyMask);
 // Vérifie aussi à chaque changement du storage
 window.addEventListener('storage', togglePrivacyMask);
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', ()=>{
+  const btn = document.getElementById('logoutBtn');
+  if(btn){
+    btn.addEventListener('click', ()=>{
+      // On simule une déconnexion : on remet admin = 0
+      sessionStorage.setItem('is_admin','0');
+      // On relance le masque
+      if(typeof togglePrivacyMask === 'function'){
+        togglePrivacyMask();
+      }
+    });
+  }
+});
+</script>
 </body>
 </html>
