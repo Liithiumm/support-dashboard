@@ -1452,8 +1452,20 @@ try{
 
 <div id="privacyMask" aria-hidden="true" style="pointer-events:none">
   <div class="mask-card">
-    🔒 Contenu masqué — connectez-vous pour accéder au contenu.</div>
-
+    🔒 Contenu verrouillé — veuillez vous connecter (Admin)
+    <br><br>
+    <button id="logoutBtn" style="
+      background:#1e293b; 
+      color:#fff; 
+      border:none; 
+      padding:6px 12px; 
+      border-radius:8px;
+      cursor:pointer;
+    ">
+      Déconnexion
+    </button>
+  </div>
+</div>
 <script>
 function togglePrivacyMask(){
   const mask = document.getElementById('privacyMask');
