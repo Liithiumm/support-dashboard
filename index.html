@@ -3,7 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Support • Neon Glass PRO — Sheets Overlay</title>
+<meta http-equiv="Content-Security-Policy"
+  content="default-src 'self';
+           script-src 'self' https://www.gstatic.com https://cdn.jsdelivr.net 'unsafe-inline';
+           connect-src 'self' https://firestore.googleapis.com https://www.googleapis.com https://www.gstatic.com;
+           img-src 'self' data: blob:;
+           style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+           font-src https://fonts.gstatic.com;
+           frame-ancestors 'none';
+           base-uri 'self';
+           form-action 'self'">
+  <title>Support • Neon Glass PRO — Sheets Overlay</title>
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600&display=swap" rel="stylesheet">
 
 <!-- Anti-flash : démarrer toujours VERROUILLÉ -->
@@ -953,13 +963,31 @@ window.addMemberFirestore = async function(tag, role, langs){
   await addDoc(collection(db, "members"), { tag, role, langs });
 };
 window.updateMemberFirestore = async function(id, fields){
-  if(!firestoreReady){
-    const i = window.members.findIndex(m=>m.id===id || m.tag===fields.tag);
-    if(i>=0){ window.members[i] = {...window.members[i], ...fields}; lsSet('support_members_v90', window.members); renderMembers(); renderReadOnly(); }
+  if (!firestoreReady){
+    const keyTag = fields.oldTag ?? fields.tag; // <- chercher avec l'ancien tag si présent
+    const i = window.members.findIndex(m => m.id === id || m.tag === keyTag);
+    if (i >= 0){
+      const next = { ...window.members[i], ...fields };
+      delete next.oldTag; // ne pas conserver oldTag dans les données
+      window.members[i] = next;
+      lsSet('support_members_v90', window.members);
+      renderMembers(); 
+      renderReadOnly();
+    }
     return;
   }
-  if(!id){ const m = window.members.find(m=>m.tag===fields.oldTag); if(!m) return; id = m.id; }
-  await updateDoc(doc(db, "members", id), fields);
+
+  // Firestore en ligne : retrouver l'id si on ne l'a pas
+  if (!id){
+    const keyTag = fields.oldTag ?? fields.tag;
+    const m = window.members.find(m => m.tag === keyTag);
+    if (!m) return;
+    id = m.id;
+  }
+
+  const toSave = { ...fields };
+  delete toSave.oldTag; // ne pas écrire oldTag en base
+  await updateDoc(doc(db, "members", id), toSave);
 };
 window.deleteMemberFirestore = async function(id){
   if(!firestoreReady){ const arr=window.members.filter(m=>m.id!==id); lsSet('support_members_v90', arr); window.members=arr; renderMembers(); renderReadOnly(); return; }
