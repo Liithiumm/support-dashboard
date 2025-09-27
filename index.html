@@ -6,16 +6,10 @@
 <title>Support • Neon Glass PRO — Sheets Overlay</title>
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600&display=swap" rel="stylesheet">
 
-<!-- Anti-flash: bascule admin/non-admin avant paint -->
+<!-- Anti-flash : démarrer toujours VERROUILLÉ -->
 <script>
-(function(){
-  try{
-    var isAdmin = sessionStorage.getItem('is_admin') === '1';
-    var html = document.documentElement;
-    html.classList.toggle('auth', !!isAdmin);
-    html.classList.toggle('noadmin', !isAdmin);
-  }catch(e){}
-})();
+  document.documentElement.classList.add('noadmin');
+  document.documentElement.classList.remove('auth');
 </script>
 
 <style>
@@ -833,6 +827,7 @@ const provider = new GoogleAuthProvider(); provider.setCustomParameters({ prompt
 function isAllowed(email){ return !!email && ALLOWED_EMAILS.map(e=>e.trim().toLowerCase()).includes(email.trim().toLowerCase()); }
 function setAdminSession(on){
   try{ sessionStorage.setItem('is_admin', on ? '1':'0'); }catch(e){}
+  window.__adminEmailOK = !!on;   // <-- marqueur sécurisé ajouté
   if(typeof applyLockUI === 'function') applyLockUI();
 }
 
@@ -845,11 +840,22 @@ async function doGoogleLogin(){
   try{
     const res = await signInWithPopup(auth, provider);
     const email = res.user?.email || '';
-    if(isAllowed(email)){ setAdminSession(true); }
-    else{
+    if(isAllowed(email)){
+      window.__adminEmailOK = true;   // <-- important
+      setAdminSession(true);
+    }else{
       alert((getLang?.()==='fr'?'Compte non autorisé: ':'Not authorized: ')+ (email||'unknown'));
-      await signOut(auth); setAdminSession(false);
+      await signOut(auth);
+      window.__adminEmailOK = false;
+      setAdminSession(false);
     }
+  }catch(err){
+    console.error(err);
+    alert(getLang?.()==='fr'?'Échec de connexion Google.':'Google sign-in failed.');
+    window.__adminEmailOK = false;
+    setAdminSession(false);
+  }
+}
   }catch(err){
     console.error(err);
     alert(getLang?.()==='fr'?'Échec de connexion Google.':'Google sign-in failed.');
@@ -858,10 +864,18 @@ async function doGoogleLogin(){
 }
 if(btnLogin)     btnLogin.onclick     = doGoogleLogin;
 if(btnLoginMask) btnLoginMask.onclick = doGoogleLogin;
-if(btnLogout)    btnLogout.onclick    = async ()=>{ try{ await signOut(auth); }catch(e){} setAdminSession(false); };
+if(btnLogout) btnLogout.onclick = async ()=>{
+  try{ await signOut(auth); }catch(e){}
+  window.__adminEmailOK = false;   // <-- sécurité
+  setAdminSession(false);
+};
 
 /* Suivre état auth */
-onAuthStateChanged(auth, (user)=>{ const ok = !!user && isAllowed(user.email||''); setAdminSession(ok); });
+onAuthStateChanged(auth, (user)=>{
+  const ok = !!user && isAllowed(user.email||'');
+  window.__adminEmailOK = ok;    // <-- sécurisation
+  setAdminSession(ok);
+});
 </script>
 
 <!-- Firestore realtime (shared data) -->
