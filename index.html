@@ -1,7 +1,19 @@
 <!doctype html>
 <html lang="fr" class="noadmin">
 <head>
-<meta charset="utf-8">
+<script>
+(function(){
+  const LOGIN_URL = "/support-dashboard/login.html"; 
+  try{
+    if(sessionStorage.getItem("admin_ok") !== "1"){
+      location.replace(LOGIN_URL + "?redirect=" + encodeURIComponent(location.href));
+    }
+  }catch(e){
+    location.replace(LOGIN_URL + "?redirect=" + encodeURIComponent(location.href));
+  }
+})();
+</script>
+  <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Support • Neon Glass PRO — Sheets Overlay</title>
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600&display=swap" rel="stylesheet">
@@ -322,10 +334,7 @@ h2{ margin:0 0 8px; font-size:clamp(16px, 1.6vw, 18px); letter-spacing:.2px }
     </div>
   </nav>
 
-  <div class="admin-cta">
-    <button class="btn small" id="adminLoginBtn"><span data-i18n="admin_login">Se connecter</span></button>
-    <button class="btn gray small" id="adminLogoutBtn" style="display:none"><span data-i18n="admin_logout">Déconnexion</span></button>
-  </div>
+  
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -825,78 +834,6 @@ document.getElementById('exportPngBtn').addEventListener('click', async function
 })();
 </script>
 
-<!-- Firebase (Google Auth) -->
-<script type="module">
-import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-/* ---- Config ---- */
-const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyD0X6PY8Xwnt6GFjh4I9J2v65KBPnFPuEs",
-  authDomain: "support-app-64fca.firebaseapp.com",
-  projectId: "support-app-64fca",
-  storageBucket: "support-app-64fca.appspot.com",
-  messagingSenderId: "391759293249",
-  appId: "1:391759293249:web:e06e61accd103c98a60fc0",
-  measurementId: "G-PYE2M5LMNY"
-};
-const ALLOWED_EMAILS = ["lithiumm31@gmail.com"]; // tes emails autorisés
-
-const app = getApps().length ? getApp() : initializeApp(FIREBASE_CONFIG);
-const auth = getAuth(app);
-setPersistence(auth, browserLocalPersistence).catch(()=>{});
-const provider = new GoogleAuthProvider();
-provider.setCustomParameters({ prompt:'select_account' });
-
-function isAllowed(email){
-  return !!email && ALLOWED_EMAILS.map(e=>e.trim().toLowerCase()).includes(email.trim().toLowerCase());
-}
-function setAdminSession(on){
-  try{ sessionStorage.setItem('is_admin', on ? '1':'0'); }catch(e){}
-  window.__adminEmailOK = !!on; // marqueur sécurisé (doit être true + sessionStorage=1)
-  if(typeof applyLockUI === 'function') applyLockUI();
-}
-
-/* Boutons */
-const btnLogin     = document.getElementById('adminLoginBtn');
-const btnLoginMask = document.getElementById('loginBtnMask');
-const btnLogout    = document.getElementById('adminLogoutBtn');
-
-async function doGoogleLogin(){
-  try{
-    const res = await signInWithPopup(auth, provider);
-    const email = res.user?.email || '';
-    if (isAllowed(email)){
-      window.__adminEmailOK = true;
-      setAdminSession(true);
-    }else{
-      alert((getLang?.()==='fr'?'Compte non autorisé: ':'Not authorized: ')+(email||'unknown'));
-      await signOut(auth);
-      window.__adminEmailOK = false;
-      setAdminSession(false);
-    }
-  }catch(err){
-    console.error(err);
-    alert(getLang?.()==='fr'?'Échec de connexion Google.':'Google sign-in failed.');
-    window.__adminEmailOK = false;
-    setAdminSession(false);
-  }
-}
-if (btnLogin)     btnLogin.onclick     = doGoogleLogin;
-if (btnLoginMask) btnLoginMask.onclick = doGoogleLogin;
-if (btnLogout)    btnLogout.onclick    = async ()=>{
-  try{ await signOut(auth); }catch(e){}
-  window.__adminEmailOK = false;
-  setAdminSession(false);
-};
-
-/* Suivre l’état auth */
-onAuthStateChanged(auth, (user)=>{
-  const ok = !!user && isAllowed(user.email||'');
-  window.__adminEmailOK = ok;
-  setAdminSession(ok);
-});
-</script>
 
 <!-- Firestore realtime (shared data) -->
 <script type="module">
@@ -1063,19 +1000,5 @@ if(firestoreReady){
 }else{ useLocalFallback(); wireUI(); }
 </script>
 
-<!-- Verrou par défaut au boot -->
-<script>
-(function(){
-  function setLockedState(locked){
-    try{ sessionStorage.setItem('is_admin', locked ? '0':'1'); }catch(e){}
-    try{ applyLockUI(); }catch(e){}
-    try{
-      document.documentElement.classList.toggle('auth', !locked);
-      document.documentElement.classList.toggle('noadmin', locked);
-    }catch(e){}
-  }
-  try{ const flag = sessionStorage.getItem('is_admin'); setLockedState(flag==='1'?false:true); }catch(e){ setLockedState(true); }
-})();
-</script>
 </body>
           </html>
