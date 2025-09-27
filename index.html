@@ -11,31 +11,15 @@
       background: #0b1728;
       font-family: Arial, sans-serif;
       color: #eaf4ff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
+      display: flex; justify-content: center; align-items: center;
+      height: 100vh; margin: 0;
     }
-    .login-box {
-      background: rgba(20, 30, 50, 0.9);
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.5);
-      text-align: center;
-    }
+    .login-box { background: rgba(20,30,50,.9); padding: 30px; border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.5); text-align: center; }
     h1 { font-size: 20px; margin-bottom: 20px; }
-    button {
-      padding: 10px 20px;
-      font-size: 15px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      background: linear-gradient(180deg, #b9efff, #59d4ff);
-      color: #03121a;
-      font-weight: bold;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 6px 14px rgba(0,0,0,.4);
-    }
+    button { padding: 10px 20px; font-size: 15px; border: 0; border-radius: 6px; cursor: pointer;
+      background: linear-gradient(180deg,#b9efff,#59d4ff); color:#03121a; font-weight: bold;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 6px 14px rgba(0,0,0,.4); }
     button:hover { filter: brightness(1.08); }
   </style>
 </head>
@@ -65,21 +49,24 @@
     measurementId: "G-PYE2M5LMNY"
   };
 
-  // Emails autorisés (UX seulement — la vraie sécu est dans Firestore Rules)
+  // Emails autorisés (UX — la vraie sécu est dans Firestore Rules)
   const ALLOWED_EMAILS = ["lithiumm31@gmail.com"].map(e => e.trim().toLowerCase());
   const isAllowed = (email) => ALLOWED_EMAILS.includes(String(email||"").trim().toLowerCase());
 
-  // Redirect sécurisé (bloque open redirect)
+  // Base du sous-dossier (corrige le 404 /a)
+  const BASE_PATH = new URL(document.baseURI).pathname; // ex: "/support-dashboard/"
+
+  // Redirect sécurisé (même origine + même sous-dossier)
   function getSafeRedirect() {
     const params = new URLSearchParams(location.search);
     const r = params.get('redirect') || 'app.html';
     try {
-      const url = new URL(r, location.origin);
-      if (url.origin === location.origin) {
+      const url = new URL(r, document.baseURI);
+      if (url.origin === location.origin && url.pathname.startsWith(BASE_PATH)) {
         return url.pathname + url.search + url.hash;
       }
     } catch {}
-    return 'app.html';
+    return BASE_PATH + 'app.html';
   }
 
   (async () => {
@@ -134,7 +121,6 @@
         if (isAllowed(email)) { setAdminSession(true); goToApp(); }
         else { await signOut(auth); setAdminSession(false); alert("Compte non autorisé."); }
       } catch (err) {
-        console.warn("Popup failed, switching to redirect…", err?.code || err);
         try { await signInWithRedirect(auth, provider); }
         catch (e2) {
           console.error("Redirect failed:", e2);
