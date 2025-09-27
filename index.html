@@ -78,14 +78,17 @@
 
   const loginBtn = document.getElementById('loginBtn');
   const setAdminSession = (on) => {
-    try { sessionStorage.setItem('is_admin', on ? '1':'0'); } catch {}
-    window.__adminEmailOK = !!on;
-  };
+  try {
+    sessionStorage.setItem('is_admin', on ? '1' : '0');
+    sessionStorage.setItem('admin_ok', on ? '1' : '0'); // <- add this
+  } catch {}
+  window.__adminEmailOK = !!on;
+};
   const goToApp = () => {
-    const params = new URLSearchParams(location.search);
-    const redirect = params.get('redirect') || '/support-dashboard/'; // ← adapte ce chemin si besoin
-    location.replace(redirect);
-  };
+  const params = new URLSearchParams(location.search);
+  const redirect = params.get('redirect') || 'app.html'; // <- was /support-dashboard/
+  location.replace(redirect);
+};
 
   // 1) Gestion du retour de redirection (mobile/iOS)
   try {
