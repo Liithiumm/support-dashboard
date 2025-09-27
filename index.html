@@ -745,28 +745,7 @@ document.getElementById('exportPngBtn').addEventListener('click', async function
     if (addBtn && form) addBtn.addEventListener('click', ()=>{ form.style.display='block'; });
     if (cancelBtn && form) cancelBtn.addEventListener('click', ()=>{ form.style.display='none'; });
   } catch (e) {}
-
-  try{
-    const confirmAddBtn = document.getElementById('confirmAddBtn');
-    const addTag = document.getElementById('addTag');
-    const addRole = document.getElementById('addRole');
-    const addLangs = document.getElementById('addLangs');
-    const addForm = document.getElementById('addForm');
-    if(confirmAddBtn && addTag && addRole && addLangs && addForm){
-      confirmAddBtn.addEventListener('click', ()=>{
-        const lang = getLang();
-        const tag = (addTag.value||'').trim();
-        const role = (addRole.value||'Support').trim();
-        const langs = (addLangs.value||'').trim();
-        if(!tag){ alert(I18N[lang].alert_tag_empty || 'Tag required'); return; }
-        if(Array.isArray(members) && members.some(m => (m && (m.tag||'').toLowerCase()) === tag.toLowerCase())){ alert(I18N[lang].alert_tag_exists || 'This tag already exists.'); return; }
-        members.push({tag, role, langs});
-        try{ localStorage.setItem('support_members_v90', JSON.stringify(members)); }catch(e){}
-        renderMembers(); renderReadOnly();
-        addTag.value=''; addRole.value='Support'; addLangs.value=''; addForm.style.display='none';
-      });
-    }
-  }catch(e){}
+  
   renderLinks();
 })();
 </script>
