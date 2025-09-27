@@ -2,22 +2,17 @@
 <html lang="fr" class="noadmin">
 <head>
 <script>
-(function () {
-  // ← la page de login est ton index du dossier
-  const LOGIN_URL = "/support-dashboard/";  
-
-  // on exige les 2 drapeaux posés par la page de login
-  let ok = false;
-  try {
-    ok = (sessionStorage.getItem("is_admin") === "1") &&
-         (sessionStorage.getItem("admin_ok") === "1");
-  } catch(e){ ok = false; }
-
-  if (!ok) {
-    try { sessionStorage.clear(); } catch(e){}
-    // on renvoie vers le login avec retour sur app.html
-    const back = "app.html";
-    location.replace(LOGIN_URL + "?redirect=" + encodeURIComponent(back));
+(function(){
+  const LOGIN_URL = "/support-dashboard/"; // (index.html)
+  try{
+    const ok = sessionStorage.getItem("is_admin_v2") === "1";
+    if(!ok){
+      const here = location.pathname + location.search + location.hash;
+      location.replace(LOGIN_URL + "?redirect=" + encodeURIComponent(here));
+    }
+  }catch(e){
+    const here = location.pathname + location.search + location.hash;
+    location.replace(LOGIN_URL + "?redirect=" + encodeURIComponent(here));
   }
 })();
 </script>
@@ -350,20 +345,18 @@ h2{ margin:0 0 8px; font-size:clamp(16px, 1.6vw, 18px); letter-spacing:.2px }
 <!-- Utils: lock UI + privacy mask -->
 <script>
 function isAdminNow(){
-  try{
-    return sessionStorage.getItem('is_admin') === '1'; // ← ne dépend plus de window.__adminEmailOK
-  }catch(e){
-    return false;
-  }
+  try { return sessionStorage.getItem('is_admin_v2') === '1'; }
+  catch(e){ return false;
+}
 }
   
 function updatePrivacyMask(){
   const mask = document.getElementById('privacyMask');
   if(!mask) return;
-  const show = !isAdminNow();
-  mask.classList.toggle('show', show);
-  document.documentElement.classList.toggle('noadmin', show);
-  document.documentElement.classList.toggle('auth', !show);
+  const admin = isAdminNow();
+  mask.classList.toggle('show', !admin);
+  document.documentElement.classList.toggle('noadmin', !admin);
+  document.documentElement.classList.toggle('auth', admin);
 }
 function applyLockUI(){
   const on = isAdminNow();
