@@ -596,10 +596,18 @@ function computeStatus(tag, n){
   return { text:'⚠️', cls:'low' };           // en dessous de 7 → attention
 }
 
+  // ---- Tri commun (ordre puis tag)
+function sortMembersFn(a, b){
+  const ao = a?.order ?? 999;
+  const bo = b?.order ?? 999;
+  if (ao != bo) return ao - bo;
+  return (a.tag||'').localeCompare(b.tag||'', 'fr', {sensitivity:'base'});
+}
+  
 function renderReadOnly(){
   const box = document.getElementById('roList');
   box.innerHTML = '';
-  const list = Array.isArray(window.members) ? window.members : [];
+  const list = [...(window.members || [])].sort(sortMembersFn);
   const tmap = window.tickets || {};
   list.forEach(m => {
     const n = Number((tmap[m.tag] ?? 0) || 0);
