@@ -34,24 +34,23 @@
       font-weight: bold;
       box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 6px 14px rgba(0,0,0,.4);
     }
-    button:hover {
-      filter: brightness(1.08);
-    }
+    button:hover { filter: brightness(1.08); }
   </style>
 </head>
 <body>
   <div class="login-box">
     <h1>Connexion requise</h1>
-    <p>Veuillez vous connecter avec Google<br> (email autorisé uniquement).</p>
+    <p>Veuillez vous connecter avec Google<br>(email autorisé uniquement).</p>
     <button id="loginBtn">Se connecter avec Google</button>
   </div>
 
   <script type="module">
-  import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
   import {
     getAuth, GoogleAuthProvider, setPersistence, browserLocalPersistence,
     onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult
-  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+  import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app-check.js";
 
   // --- Config Firebase ---
   const FIREBASE_CONFIG = {
@@ -64,75 +63,85 @@
     measurementId: "G-PYE2M5LMNY"
   };
 
-  // Autorisés (normalisés en lowercase)
+  // Emails autorisés
   const ALLOWED_EMAILS = ["lithiumm31@gmail.com"].map(e => e.trim().toLowerCase());
   const isAllowed = (email) => ALLOWED_EMAILS.includes(String(email||"").trim().toLowerCase());
 
-  // Init
-  const app  = getApps().length ? getApp() : initializeApp(FIREBASE_CONFIG);
-  const auth = getAuth(app);
-  try { await setPersistence(auth, browserLocalPersistence); } catch {}
-
-  const provider = new GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: 'select_account' });
-
-  const loginBtn = document.getElementById('loginBtn');
-  const setAdminSession = (on) => {
-  try {
-    const v = on ? '1' : '0';
-    // Unifier toutes les clés utilisées par app.html
-    sessionStorage.setItem('is_admin_v2', v);  // ← clé lue par app.html
-    sessionStorage.setItem('is_admin',   v);
-    sessionStorage.setItem('admin_ok',   v);
-  } catch {}
-  window.__adminEmailOK = !!on;
-};
-  const goToApp = () => {
-  const params = new URLSearchParams(location.search);
-  const redirect = params.get('redirect') || 'app.html'; // <- was /support-dashboard/
-  location.replace(redirect);
-};
-
-  // 1) Gestion du retour de redirection (mobile/iOS)
-  try {
-    const result = await getRedirectResult(auth);
-    if (result?.user) {
-      const email = result.user.email || '';
-      if (isAllowed(email)) { setAdminSession(true); goToApp(); }
-      else { await signOut(auth); setAdminSession(false); alert("Compte non autorisé."); }
-    }
-  } catch (e) {
-    console.error("getRedirectResult error:", e);
+  // Redirect sécurisé (bloque open redirect)
+  function getSafeRedirect() {
+    const params = new URLSearchParams(location.search);
+    const r = params.get('redirect') || 'app.html';
+    try {
+      const url = new URL(r, location.origin);
+      if (url.origin === location.origin) {
+        return url.pathname + url.search + url.hash;
+      }
+    } catch {}
+    return 'app.html';
   }
 
-  // 2) Si déjà connecté (session)
-  onAuthStateChanged(auth, (user) => {
-    if (!user) return;
-    if (isAllowed(user.email||'')) { setAdminSession(true); goToApp(); }
-    else { setAdminSession(false); signOut(auth); }
-  });
+  (async () => {
+    const app  = getApps().length ? getApp() : initializeApp(FIREBASE_CONFIG);
+    const auth = getAuth(app);
+    try { await setPersistence(auth, browserLocalPersistence); } catch {}
 
-  // 3) Clic sur le bouton : popup → fallback redirect si bloqué
-  loginBtn?.addEventListener('click', async () => {
-    loginBtn.disabled = true;
+    // App Check activé avec ta clé
     try {
-      // Essai popup (desktop/Android)
-      const res = await signInWithPopup(auth, provider);
-      const email = res.user?.email || '';
-      if (isAllowed(email)) { setAdminSession(true); goToApp(); }
-      else { await signOut(auth); setAdminSession(false); alert("Compte non autorisé."); }
-    } catch (err) {
-      console.warn("Popup failed, switching to redirect…", err?.code || err);
-      // Fallback (iOS/Safari, popup bloqué)
-      try {
-        await signInWithRedirect(auth, provider);
-      } catch (e2) {
-        console.error("Redirect failed:", e2);
-        alert("Échec de connexion Google.");
-        loginBtn.disabled = false;
+      initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider("6LfyINcrAAAAALHjNBMMm3hRplWVUx4_i-HSLrpL"),
+        isTokenAutoRefreshEnabled: true,
+      });
+    } catch {}
+
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+
+    const loginBtn = document.getElementById('loginBtn');
+    const setAdminSession = (on) => {
+      const v = on ? '1' : '0';
+      sessionStorage.setItem('is_admin_v2', v);
+      sessionStorage.setItem('is_admin', v);
+      sessionStorage.setItem('admin_ok', v);
+      window.__adminEmailOK = !!on;
+    };
+    const goToApp = () => location.replace(getSafeRedirect());
+
+    // 1) Gestion retour redirect
+    try {
+      const result = await getRedirectResult(auth);
+      if (result?.user) {
+        const email = result.user.email || '';
+        if (isAllowed(email)) { setAdminSession(true); goToApp(); }
+        else { await signOut(auth); setAdminSession(false); alert("Compte non autorisé."); }
       }
-    }
-  });
+    } catch (e) { console.error("getRedirectResult error:", e); }
+
+    // 2) Déjà connecté
+    onAuthStateChanged(auth, (user) => {
+      if (!user) return;
+      if (isAllowed(user.email||'')) { setAdminSession(true); goToApp(); }
+      else { setAdminSession(false); signOut(auth); }
+    });
+
+    // 3) Clic bouton
+    loginBtn?.addEventListener('click', async () => {
+      loginBtn.disabled = true;
+      try {
+        const res = await signInWithPopup(auth, provider);
+        const email = res.user?.email || '';
+        if (isAllowed(email)) { setAdminSession(true); goToApp(); }
+        else { await signOut(auth); setAdminSession(false); alert("Compte non autorisé."); }
+      } catch (err) {
+        console.warn("Popup failed, switching to redirect…", err?.code || err);
+        try { await signInWithRedirect(auth, provider); }
+        catch (e2) {
+          console.error("Redirect failed:", e2);
+          alert("Échec de connexion Google.");
+          loginBtn.disabled = false;
+        }
+      }
+    });
+  })();
   </script>
 </body>
 </html>
