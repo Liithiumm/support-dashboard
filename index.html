@@ -61,7 +61,12 @@
       measurementId: "G-PYE2M5LMNY"
     };
 
-    const ALLOWED_EMAILS = ["lithiumm31@gmail.com"]; // ton email autorisé
+// Liste autorisée (normalisée en lowercase)
+const ALLOWED_EMAILS = ["lithiumm31@gmail.com"].map(e => e.trim().toLowerCase());
+
+function isAllowed(email){
+  return ALLOWED_EMAILS.includes(String(email || "").trim().toLowerCase());
+}
 
     // --- Init Firebase ---
     const app  = getApps().length ? getApp() : initializeApp(FIREBASE_CONFIG);
@@ -78,7 +83,7 @@
       window.__adminEmailOK = !!on;
     }
     function goToApp(){
-      location.replace("/support-dashboard/"); // ← change si ton dossier a un autre nom
+  location.replace("app.html"); // va vers ta page protégée
     }
 
     // Vérifie si déjà connecté
