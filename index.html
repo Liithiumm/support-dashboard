@@ -536,7 +536,7 @@ function renderLinks(){
     row.innerHTML=`
       <div class="link-label"><b>${r.label}</b></div>
       <div class="link-actions">
-        <a class="btn gray small" href="${LINKS[r.key]}" target="_blank" rel="noopener" aria-label="${aria}">${btnText}</a>
+        <a class="btn gray small" href="${LINKS[r.key]}" target="_blank" rel="noopener noreferrer" aria-label="${aria}">${btnText}</a>
         <button class="btn small" data-edit="${r.editor}" data-input="${r.input}" data-key="${r.key}" aria-label="Edit ${r.label}">✎</button>
       </div>`;
     box.appendChild(row);
