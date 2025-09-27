@@ -47,65 +47,86 @@
   </div>
 
   <script type="module">
-    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, setPersistence, browserLocalPersistence, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getAuth, GoogleAuthProvider, setPersistence, browserLocalPersistence,
+    onAuthStateChanged, signOut, signInWithPopup, signInWithRedirect, getRedirectResult
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-    // --- Config Firebase ---
-    const FIREBASE_CONFIG = {
-      apiKey: "AIzaSyD0X6PY8Xwnt6GFjh4I9J2v65KBPnFPuEs",
-      authDomain: "support-app-64fca.firebaseapp.com",
-      projectId: "support-app-64fca",
-      storageBucket: "support-app-64fca.appspot.com",
-      messagingSenderId: "391759293249",
-      appId: "1:391759293249:web:e06e61accd103c98a60fc0",
-      measurementId: "G-PYE2M5LMNY"
-    };
+  // --- Config Firebase ---
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyD0X6PY8Xwnt6GFjh4I9J2v65KBPnFPuEs",
+    authDomain: "support-app-64fca.firebaseapp.com",
+    projectId: "support-app-64fca",
+    storageBucket: "support-app-64fca.appspot.com",
+    messagingSenderId: "391759293249",
+    appId: "1:391759293249:web:e06e61accd103c98a60fc0",
+    measurementId: "G-PYE2M5LMNY"
+  };
 
-// Liste autorisée (normalisée en lowercase)
-const ALLOWED_EMAILS = ["lithiumm31@gmail.com"].map(e => e.trim().toLowerCase());
+  // Autorisés (normalisés en lowercase)
+  const ALLOWED_EMAILS = ["lithiumm31@gmail.com"].map(e => e.trim().toLowerCase());
+  const isAllowed = (email) => ALLOWED_EMAILS.includes(String(email||"").trim().toLowerCase());
 
-function isAllowed(email){
-  return ALLOWED_EMAILS.includes(String(email || "").trim().toLowerCase());
-}
+  // Init
+  const app  = getApps().length ? getApp() : initializeApp(FIREBASE_CONFIG);
+  const auth = getAuth(app);
+  try { await setPersistence(auth, browserLocalPersistence); } catch {}
 
-    // --- Init Firebase ---
-    const app  = getApps().length ? getApp() : initializeApp(FIREBASE_CONFIG);
-    const auth = getAuth(app);
-    await setPersistence(auth, browserLocalPersistence);
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: 'select_account' });
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
 
-    function isAllowed(email){
-      return !!email && ALLOWED_EMAILS.includes(email.trim().toLowerCase());
+  const loginBtn = document.getElementById('loginBtn');
+  const setAdminSession = (on) => {
+    try { sessionStorage.setItem('is_admin', on ? '1':'0'); } catch {}
+    window.__adminEmailOK = !!on;
+  };
+  const goToApp = () => {
+    const params = new URLSearchParams(location.search);
+    const redirect = params.get('redirect') || '/support-dashboard/'; // ← adapte ce chemin si besoin
+    location.replace(redirect);
+  };
+
+  // 1) Gestion du retour de redirection (mobile/iOS)
+  try {
+    const result = await getRedirectResult(auth);
+    if (result?.user) {
+      const email = result.user.email || '';
+      if (isAllowed(email)) { setAdminSession(true); goToApp(); }
+      else { await signOut(auth); setAdminSession(false); alert("Compte non autorisé."); }
     }
-    function setAdminSession(on){
-      try{ sessionStorage.setItem('is_admin', on ? '1':'0'); }catch{}
-      window.__adminEmailOK = !!on;
-    }
-    function goToApp(){
-  location.replace("app.html"); // va vers ta page protégée
-    }
+  } catch (e) {
+    console.error("getRedirectResult error:", e);
+  }
 
-    // Vérifie si déjà connecté
-    onAuthStateChanged(auth, (user)=>{
-      if (!user) return;
-      if (isAllowed(user.email||'')){ setAdminSession(true); goToApp(); }
-      else { setAdminSession(false); signOut(auth); alert("Compte non autorisé."); }
-    });
+  // 2) Si déjà connecté (session)
+  onAuthStateChanged(auth, (user) => {
+    if (!user) return;
+    if (isAllowed(user.email||'')) { setAdminSession(true); goToApp(); }
+    else { setAdminSession(false); signOut(auth); }
+  });
 
-    // Bouton login
-    document.getElementById('loginBtn').onclick = async ()=>{
-      try{
-        const res = await signInWithPopup(auth, provider);
-        const email = res.user?.email || '';
-        if (isAllowed(email)){ setAdminSession(true); goToApp(); }
-        else { await signOut(auth); setAdminSession(false); alert("Compte non autorisé."); }
-      }catch(e){
-        console.error(e);
+  // 3) Clic sur le bouton : popup → fallback redirect si bloqué
+  loginBtn?.addEventListener('click', async () => {
+    loginBtn.disabled = true;
+    try {
+      // Essai popup (desktop/Android)
+      const res = await signInWithPopup(auth, provider);
+      const email = res.user?.email || '';
+      if (isAllowed(email)) { setAdminSession(true); goToApp(); }
+      else { await signOut(auth); setAdminSession(false); alert("Compte non autorisé."); }
+    } catch (err) {
+      console.warn("Popup failed, switching to redirect…", err?.code || err);
+      // Fallback (iOS/Safari, popup bloqué)
+      try {
+        await signInWithRedirect(auth, provider);
+      } catch (e2) {
+        console.error("Redirect failed:", e2);
         alert("Échec de connexion Google.");
-        setAdminSession(false);
+        loginBtn.disabled = false;
       }
-    };
+    }
+  });
   </script>
 </body>
 </html>
