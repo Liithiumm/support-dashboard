@@ -335,6 +335,9 @@ h2{ margin:0 0 8px; font-size:clamp(16px, 1.6vw, 18px); letter-spacing:.2px }
       <button class="tab" data-sheet="sheet-edit"><span class="ic">✏️</span> <span data-i18n="tab_edit">Éditer</span></button>
       <button class="tab" data-sheet="sheet-links"><span class="ic">🔗</span> <span data-i18n="tab_links">Liens</span></button>
     </div>
+    <div class="admin-cta">
+  <button id="adminLogoutBtn" class="btn small" style="display:none">Déconnexion</button>
+    </div>
   </nav>
 
   
@@ -345,9 +348,11 @@ h2{ margin:0 0 8px; font-size:clamp(16px, 1.6vw, 18px); letter-spacing:.2px }
 <!-- Utils: lock UI + privacy mask -->
 <script>
 function isAdminNow(){
-  try { return sessionStorage.getItem('is_admin_v2') === '1'; }
-  catch(e){ return false;
-}
+  try {
+    return sessionStorage.getItem('is_admin_v2') === '1';
+  } catch (e) {
+    return false;
+  }
 }
   
 function updatePrivacyMask(){
@@ -1010,5 +1015,44 @@ document.addEventListener('click', (e)=>{
   location.href = LOGIN_URL + "?redirect=" + encodeURIComponent(back);
 });
 </script>
+  <script type="module">
+  import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyD0X6PY8Xwnt6GFjh4I9J2v65KBPnFPuEs",
+    authDomain: "support-app-64fca.firebaseapp.com",
+    projectId: "support-app-64fca",
+    storageBucket: "support-app-64fca.appspot.com",
+    messagingSenderId: "391759293249",
+    appId: "1:391759293249:web:e06e61accd103c98a60fc0",
+    measurementId: "G-PYE2M5LMNY"
+  };
+
+  const app = getApps().length ? getApp() : initializeApp(FIREBASE_CONFIG);
+  const auth = getAuth(app);
+
+  // Afficher / cacher le bouton selon l'état admin
+  function syncLogoutBtn(){
+    const btn = document.getElementById('adminLogoutBtn');
+    if (!btn) return;
+    btn.style.display = (sessionStorage.getItem('is_admin_v2') === '1') ? 'inline-flex' : 'none';
+  }
+  document.addEventListener('DOMContentLoaded', syncLogoutBtn);
+
+  // Déconnexion
+  document.getElementById('adminLogoutBtn')?.addEventListener('click', async ()=>{
+    try { await signOut(auth); } catch(e){}
+    try {
+      sessionStorage.removeItem('is_admin_v2');
+      sessionStorage.removeItem('is_admin');
+      sessionStorage.removeItem('admin_ok');
+    } catch(e){}
+    window.__adminEmailOK = false;
+
+    // retour sur la page de login (ton index du dossier)
+    location.replace("/support-dashboard/");
+  });
+  </script>
 </body>
           </html>
