@@ -315,7 +315,13 @@ h2{ margin:0 0 8px; font-size:clamp(16px, 1.6vw, 18px); letter-spacing:.2px }
 
 <!-- Utils: lock UI + privacy mask -->
 <script>
-function isAdminNow(){ try{ return sessionStorage.getItem('is_admin') === '1'; }catch(e){ return false; } }
+ function isAdminNow(){
+  try{
+    return sessionStorage.getItem('is_admin') === '1' && window.__adminEmailOK === true;
+  }catch(e){
+    return false;
+  }
+ }
 function updatePrivacyMask(){
   const mask = document.getElementById('privacyMask');
   if(!mask) return;
@@ -817,34 +823,37 @@ const FIREBASE_CONFIG = {
   appId: "1:391759293249:web:e06e61accd103c98a60fc0",
   measurementId: "G-PYE2M5LMNY"
 };
-const ALLOWED_EMAILS = ["lithiumm31@gmail.com"]; // ajoute tes emails ici
+const ALLOWED_EMAILS = ["lithiumm31@gmail.com"]; // tes emails autorisés
 
 const app = getApps().length ? getApp() : initializeApp(FIREBASE_CONFIG);
 const auth = getAuth(app);
 setPersistence(auth, browserLocalPersistence).catch(()=>{});
-const provider = new GoogleAuthProvider(); provider.setCustomParameters({ prompt:'select_account' });
+const provider = new GoogleAuthProvider();
+provider.setCustomParameters({ prompt:'select_account' });
 
-function isAllowed(email){ return !!email && ALLOWED_EMAILS.map(e=>e.trim().toLowerCase()).includes(email.trim().toLowerCase()); }
+function isAllowed(email){
+  return !!email && ALLOWED_EMAILS.map(e=>e.trim().toLowerCase()).includes(email.trim().toLowerCase());
+}
 function setAdminSession(on){
   try{ sessionStorage.setItem('is_admin', on ? '1':'0'); }catch(e){}
-  window.__adminEmailOK = !!on;   // <-- marqueur sécurisé ajouté
+  window.__adminEmailOK = !!on; // marqueur sécurisé (doit être true + sessionStorage=1)
   if(typeof applyLockUI === 'function') applyLockUI();
 }
 
 /* Boutons */
-const btnLogin      = document.getElementById('adminLoginBtn');
-const btnLoginMask  = document.getElementById('loginBtnMask'); // bouton sur le masque
-const btnLogout     = document.getElementById('adminLogoutBtn');
+const btnLogin     = document.getElementById('adminLoginBtn');
+const btnLoginMask = document.getElementById('loginBtnMask');
+const btnLogout    = document.getElementById('adminLogoutBtn');
 
 async function doGoogleLogin(){
   try{
     const res = await signInWithPopup(auth, provider);
     const email = res.user?.email || '';
-    if(isAllowed(email)){
-      window.__adminEmailOK = true;   // <-- important
+    if (isAllowed(email)){
+      window.__adminEmailOK = true;
       setAdminSession(true);
     }else{
-      alert((getLang?.()==='fr'?'Compte non autorisé: ':'Not authorized: ')+ (email||'unknown'));
+      alert((getLang?.()==='fr'?'Compte non autorisé: ':'Not authorized: ')+(email||'unknown'));
       await signOut(auth);
       window.__adminEmailOK = false;
       setAdminSession(false);
@@ -856,24 +865,18 @@ async function doGoogleLogin(){
     setAdminSession(false);
   }
 }
-  }catch(err){
-    console.error(err);
-    alert(getLang?.()==='fr'?'Échec de connexion Google.':'Google sign-in failed.');
-    setAdminSession(false);
-  }
-}
-if(btnLogin)     btnLogin.onclick     = doGoogleLogin;
-if(btnLoginMask) btnLoginMask.onclick = doGoogleLogin;
-if(btnLogout) btnLogout.onclick = async ()=>{
+if (btnLogin)     btnLogin.onclick     = doGoogleLogin;
+if (btnLoginMask) btnLoginMask.onclick = doGoogleLogin;
+if (btnLogout)    btnLogout.onclick    = async ()=>{
   try{ await signOut(auth); }catch(e){}
-  window.__adminEmailOK = false;   // <-- sécurité
+  window.__adminEmailOK = false;
   setAdminSession(false);
 };
 
-/* Suivre état auth */
+/* Suivre l’état auth */
 onAuthStateChanged(auth, (user)=>{
   const ok = !!user && isAllowed(user.email||'');
-  window.__adminEmailOK = ok;    // <-- sécurisation
+  window.__adminEmailOK = ok;
   setAdminSession(ok);
 });
 </script>
