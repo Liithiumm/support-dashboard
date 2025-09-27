@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connexion • Support Dashboard</title>
+  <style>
+    body {
+      background: #0b1728;
+      font-family: Arial, sans-serif;
+      color: #eaf4ff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .login-box {
+      background: rgba(20, 30, 50, 0.9);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.5);
+      text-align: center;
+    }
+    h1 { font-size: 20px; margin-bottom: 20px; }
+    button {
+      padding: 10px 20px;
+      font-size: 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: linear-gradient(180deg, #b9efff, #59d4ff);
+      color: #03121a;
+      font-weight: bold;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 6px 14px rgba(0,0,0,.4);
+    }
+    button:hover {
+      filter: brightness(1.08);
+    }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <h1>Connexion requise</h1>
+    <p>Veuillez vous connecter avec Google<br> (email autorisé uniquement).</p>
+    <button id="loginBtn">Se connecter avec Google</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, setPersistence, browserLocalPersistence, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    // --- Config Firebase ---
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyD0X6PY8Xwnt6GFjh4I9J2v65KBPnFPuEs",
+      authDomain: "support-app-64fca.firebaseapp.com",
+      projectId: "support-app-64fca",
+      storageBucket: "support-app-64fca.appspot.com",
+      messagingSenderId: "391759293249",
+      appId: "1:391759293249:web:e06e61accd103c98a60fc0",
+      measurementId: "G-PYE2M5LMNY"
+    };
+
+    const ALLOWED_EMAILS = ["lithiumm31@gmail.com"]; // ton email autorisé
+
+    // --- Init Firebase ---
+    const app  = getApps().length ? getApp() : initializeApp(FIREBASE_CONFIG);
+    const auth = getAuth(app);
+    await setPersistence(auth, browserLocalPersistence);
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+
+    function isAllowed(email){
+      return !!email && ALLOWED_EMAILS.includes(email.trim().toLowerCase());
+    }
+    function setAdminSession(on){
+      try{ sessionStorage.setItem('is_admin', on ? '1':'0'); }catch{}
+      window.__adminEmailOK = !!on;
+    }
+    function goToApp(){
+      location.replace("/support-dashboard/"); // ← change si ton dossier a un autre nom
+    }
+
+    // Vérifie si déjà connecté
+    onAuthStateChanged(auth, (user)=>{
+      if (!user) return;
+      if (isAllowed(user.email||'')){ setAdminSession(true); goToApp(); }
+      else { setAdminSession(false); signOut(auth); alert("Compte non autorisé."); }
+    });
+
+    // Bouton login
+    document.getElementById('loginBtn').onclick = async ()=>{
+      try{
+        const res = await signInWithPopup(auth, provider);
+        const email = res.user?.email || '';
+        if (isAllowed(email)){ setAdminSession(true); goToApp(); }
+        else { await signOut(auth); setAdminSession(false); alert("Compte non autorisé."); }
+      }catch(e){
+        console.error(e);
+        alert("Échec de connexion Google.");
+        setAdminSession(false);
+      }
+    };
+  </script>
+</body>
+</html>
