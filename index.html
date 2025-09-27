@@ -734,7 +734,6 @@ function renderMembers(){
 }
 renderMembers();
     
-
 /* ========= Week label ========= */
 function fmt(d){ const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), da=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${da}`; }
 function mondayOf(d){ const x=new Date(d.getTime()); const day=x.getDay(); const diff=(day+6)%7; x.setDate(x.getDate()-diff); x.setHours(0,0,0,0); return x; }
