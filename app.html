@@ -349,13 +349,14 @@ h2{ margin:0 0 8px; font-size:clamp(16px, 1.6vw, 18px); letter-spacing:.2px }
 
 <!-- Utils: lock UI + privacy mask -->
 <script>
- function isAdminNow(){
+function isAdminNow(){
   try{
-    return sessionStorage.getItem('is_admin') === '1' && window.__adminEmailOK === true;
+    return sessionStorage.getItem('is_admin') === '1'; // ← ne dépend plus de window.__adminEmailOK
   }catch(e){
     return false;
   }
- }
+}
+  
 function updatePrivacyMask(){
   const mask = document.getElementById('privacyMask');
   if(!mask) return;
