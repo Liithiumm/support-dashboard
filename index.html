@@ -559,7 +559,7 @@ document.getElementById('saveTicketsUrl').onclick=function(){ const v=document.g
 document.getElementById('saveLeaderUrl').onclick=function(){ const v=document.getElementById('leaderUrlInput').value.trim(); if(!v) return; LINKS.leader=v; saveLinks(LINKS); renderLinks(); document.getElementById('editorLeader').style.display='none'; };
 document.getElementById('saveSheetUrl').onclick=function(){ const v=document.getElementById('sheetUrlInput').value.trim(); if(!v) return; LINKS.sheet=v; saveLinks(LINKS); renderLinks(); document.getElementById('editorSheet').style.display='none'; };
 
-  /* ======= Members & tickets (local, puis Firestore si admin) ======= */
+/* ======= Members & tickets (local, puis Firestore si admin) ======= */
 const DEFAULT_MEMBERS = [];
 
 function loadMembers(){
@@ -572,7 +572,6 @@ function loadMembers(){
   }
 }
 
-  
 function saveMembers(a){ localStorage.setItem('support_members_v90', JSON.stringify(a)); }
 function loadTickets(){
   try {
@@ -582,8 +581,14 @@ function loadTickets(){
   }
 }
 function saveTickets(o){ localStorage.setItem('support_tickets_v91', JSON.stringify(o)); }
-let members = loadMembers();
-let tickets = loadTickets();
+
+// 🔥 Source unique = window.* (Firestore les met à jour)
+window.members = window.members || loadMembers();
+window.tickets = window.tickets || loadTickets();
+
+// variables locales = alias des globals (pour compat)
+let members = window.members;
+let tickets = window.tickets;
 
 function computeStatus(tag, n){
   const x = Number(n) || 0;
@@ -591,11 +596,14 @@ function computeStatus(tag, n){
   if (x === 0) return { text:'⚠️', cls:'low' };  // faible
   return { text:'—', cls:'neutral' };            // neutre
 }
+
 function renderReadOnly(){
   const box = document.getElementById('roList');
   box.innerHTML = '';
-  members.forEach(m => {
-    const n = Number((tickets[m.tag] ?? 0) || 0);
+  const list = Array.isArray(window.members) ? window.members : [];
+  const tmap = window.tickets || {};
+  list.forEach(m => {
+    const n = Number((tmap[m.tag] ?? 0) || 0);
     const s = computeStatus(m.tag, n);
     const row = document.createElement('div');
     row.className = 'member-ro';
@@ -615,9 +623,12 @@ renderReadOnly();
 function renderMembers(){
   const container=document.getElementById('membersContainer'); if(!container) return;
   container.innerHTML='';
-  members.forEach((m, idx)=>{
+  const list = Array.isArray(window.members) ? window.members : [];
+  const tmap = window.tickets || {};
+
+  list.forEach((m, idx)=>{
     const row=document.createElement('div'); row.className='member-ro';
-    const tVal = Number((tickets[m.tag] ?? 0) || 0);
+    const tVal = Number((tmap[m.tag] ?? 0) || 0);
     row.innerHTML=`
       <div>
         <div class="tag-copy" style="display:inline-flex;align-items:center;gap:8px;">
@@ -634,6 +645,7 @@ function renderMembers(){
     `;
     container.appendChild(row);
 
+    // Ouvre l’éditeur (les actions Save/Delete sont gérées par le module Firestore via delegation)
     row.querySelector('.edit-btn').onclick=function(){
       const lang = getLang();
       const dlg=document.createElement('div');
@@ -649,40 +661,28 @@ function renderMembers(){
         </div>
         <div style="margin-top:8px"><label>${t(lang,'add_form_langs')}</label><input class="e-langs" value="${m.langs||''}" placeholder="${t(lang,'add_form_langs_ph')}"></div>
         <div style="margin-top:8px"><label>Tickets</label><input class="e-tickets" type="number" min="0" value="${tVal}"></div>
-        <div class="actions" style="margin-top:8px"><button class="btn save2">${t(lang,'save_btn')}</button><button class="btn gray cancel2">${t(lang,'cancel_btn')}</button></div>
+        <div class="actions" style="margin-top:8px">
+          <button class="btn save2">${t(lang,'save_btn')}</button>
+          <button class="btn gray cancel2">${t(lang,'cancel_btn')}</button>
+        </div>
       `;
       row.after(dlg);
       dlg.querySelector('.cancel2').onclick=()=>dlg.remove();
-      dlg.querySelector('.save2').onclick=()=>{
-        const newTag=dlg.querySelector('.e-tag').value.trim();
-        const newRole=dlg.querySelector('.e-role').value;
-        const newLangs=dlg.querySelector('.e-langs').value.trim();
-        const newT=Number(dlg.querySelector('.e-tickets').value||0);
-        if(!newTag){ alert(t(lang,'alert_tag_empty')); return; }
-        if(newTag!==m.tag){ const old = tickets[m.tag]; delete tickets[m.tag]; tickets[newTag] = (old ?? newT); }
-        else { tickets[m.tag]=newT; }
-        m.tag=newTag; m.role=newRole; m.langs=newLangs;
-        localStorage.setItem('support_members_v90', JSON.stringify(members));
-        localStorage.setItem('support_tickets_v91', JSON.stringify(tickets));
-        renderMembers(); renderReadOnly(); dlg.remove();
-      };
+
+      // ⚠️ On NE gère PAS ici save2/delete — c’est le module Firestore qui écoute ces boutons
     };
 
-    row.querySelector('.delete-btn').onclick=function(){
-      const lang = getLang();
-      if(!confirm(lang==='fr'?'Supprimer ce membre ?':'Delete this member?')) return;
-      members.splice(idx,1);
-      localStorage.setItem('support_members_v90', JSON.stringify(members));
-      renderMembers(); renderReadOnly();
-    };
+    // Copier le tag
     row.querySelector('.copy-tag').onclick = async function(){
       const text = m.tag;
       try{ await navigator.clipboard.writeText(text); this.textContent='✓'; setTimeout(()=> this.textContent='📋', 900); }
       catch(e){ alert('Copie impossible / Copy failed'); }
     };
+    // ⚠️ On ne gère pas ici delete-btn → c’est géré par le module Firestore (delegation)
   });
 }
 renderMembers();
+    
 
 /* ========= Week label ========= */
 function fmt(d){ const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), da=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${da}`; }
