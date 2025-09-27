@@ -622,7 +622,17 @@ renderReadOnly();
 function renderMembers(){
   const container=document.getElementById('membersContainer'); if(!container) return;
   container.innerHTML='';
-  const list = Array.isArray(window.members) ? window.members : [];
+
+  // Tri par "order" puis par tag (si tu n'as pas déjà sortMembersFn)
+  const sortFn = (typeof sortMembersFn === 'function')
+    ? sortMembersFn
+    : (a,b)=>{
+        const ao=(a.order??999), bo=(b.order??999);
+        if(ao!==bo) return ao-bo;
+        return (a.tag||'').localeCompare(b.tag||'', 'fr', {sensitivity:'base'});
+      };
+
+  const list = [...(window.members || [])].sort(sortFn);
   const tmap = window.tickets || {};
 
   list.forEach((m, idx)=>{
@@ -638,13 +648,52 @@ function renderMembers(){
       </div>
       <div class="tickets-badge">${isNaN(tVal)?0:tVal}</div>
       <div class="actions">
+        <button class="btn gray small move-up"${idx===0?' disabled':''}>▲</button>
+        <button class="btn gray small move-down"${idx===list.length-1?' disabled':''}>▼</button>
         <button class="btn gray small edit-btn">✎</button>
         <button class="btn gray small delete-btn">Suppr.</button>
       </div>
     `;
     container.appendChild(row);
 
-    // Ouvre l’éditeur (les actions Save/Delete sont gérées par le module Firestore via delegation)
+    // Copier le tag
+    row.querySelector('.copy-tag').onclick = async function(){
+      try{ await navigator.clipboard.writeText(m.tag); this.textContent='✓'; setTimeout(()=> this.textContent='📋', 900); }
+      catch(e){ alert('Copie impossible / Copy failed'); }
+    };
+
+    // Monter / Descendre → échange les valeurs "order" avec le voisin
+    const swapWith = async (targetIdx)=>{
+      if(targetIdx<0 || targetIdx>=list.length) return;
+      const A = list[idx], B = list[targetIdx];
+      const aOrder = (A.order ?? (idx+1));
+      const bOrder = (B.order ?? (targetIdx+1));
+
+      if (typeof window.updateMemberFirestore === 'function') {
+        try{
+          await Promise.all([
+            window.updateMemberFirestore(A.id, { order: bOrder }),
+            window.updateMemberFirestore(B.id, { order: aOrder }),
+          ]);
+        }catch(e){
+          console.error('swap order failed', e);
+          alert('Échec de la sauvegarde de l’ordre.');
+          return;
+        }
+      } else {
+        const aRef = (window.members||[]).find(x=>x.tag===A.tag);
+        const bRef = (window.members||[]).find(x=>x.tag===B.tag);
+        if(aRef) aRef.order = bOrder;
+        if(bRef) bRef.order = aOrder;
+        try{ localStorage.setItem('support_members_v90', JSON.stringify(window.members)); }catch(e){}
+      }
+      renderMembers(); renderReadOnly();
+    };
+
+    row.querySelector('.move-up')?.addEventListener('click', ()=> swapWith(idx-1));
+    row.querySelector('.move-down')?.addEventListener('click', ()=> swapWith(idx+1));
+
+    // Édition (save/delete sont gérés par le module Firestore via delegation)
     row.querySelector('.edit-btn').onclick=function(){
       const lang = getLang();
       const dlg=document.createElement('div');
@@ -667,17 +716,20 @@ function renderMembers(){
       `;
       row.after(dlg);
       dlg.querySelector('.cancel2').onclick=()=>dlg.remove();
-
-      // ⚠️ On NE gère PAS ici save2/delete — c’est le module Firestore qui écoute ces boutons
     };
 
-    // Copier le tag
-    row.querySelector('.copy-tag').onclick = async function(){
-      const text = m.tag;
-      try{ await navigator.clipboard.writeText(text); this.textContent='✓'; setTimeout(()=> this.textContent='📋', 900); }
-      catch(e){ alert('Copie impossible / Copy failed'); }
+    // Supprimer (si Firestore pas dispo, fallback local)
+    row.querySelector('.delete-btn').onclick=function(){
+      const ok = confirm((localStorage.getItem('ui_lang')||'fr')==='fr'?'Supprimer ce membre ?':'Delete this member?');
+      if(!ok) return;
+      if(typeof window.deleteMemberFirestore !== 'function'){
+        const tagTxt = m.tag;
+        const arr = (window.members||[]).filter(x=>x.tag!==tagTxt);
+        window.members = arr;
+        try{ localStorage.setItem('support_members_v90', JSON.stringify(arr)); }catch(e){}
+        renderMembers(); renderReadOnly();
+      }
     };
-    // ⚠️ On ne gère pas ici delete-btn → c’est géré par le module Firestore (delegation)
   });
 }
 renderMembers();
