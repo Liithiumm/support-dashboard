@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Connexion • Support Dashboard</title>
+  <!-- IMPORTANT pour GitHub Pages sous /support-dashboard/ -->
+  <base href="/support-dashboard/">
   <style>
     body {
       background: #0b1728;
@@ -63,7 +65,7 @@
     measurementId: "G-PYE2M5LMNY"
   };
 
-  // Emails autorisés
+  // Emails autorisés (UX seulement — la vraie sécu est dans Firestore Rules)
   const ALLOWED_EMAILS = ["lithiumm31@gmail.com"].map(e => e.trim().toLowerCase());
   const isAllowed = (email) => ALLOWED_EMAILS.includes(String(email||"").trim().toLowerCase());
 
