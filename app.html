@@ -2,17 +2,22 @@
 <html lang="fr" class="noadmin">
 <head>
 <script>
-(function(){
-  const LOGIN_URL = "/support-dashboard/login.html"; // adapte si besoin
-  try{
-    const ok = sessionStorage.getItem("is_admin") === "1" || sessionStorage.getItem("admin_ok") === "1";
-    if(!ok){
-      const here = location.pathname + location.search + location.hash;
-      location.replace(LOGIN_URL + "?redirect=" + encodeURIComponent(here));
-    }
-  }catch(e){
-    const here = location.pathname + location.search + location.hash;
-    location.replace(LOGIN_URL + "?redirect=" + encodeURIComponent(here));
+(function () {
+  // ← la page de login est ton index du dossier
+  const LOGIN_URL = "/support-dashboard/";  
+
+  // on exige les 2 drapeaux posés par la page de login
+  let ok = false;
+  try {
+    ok = (sessionStorage.getItem("is_admin") === "1") &&
+         (sessionStorage.getItem("admin_ok") === "1");
+  } catch(e){ ok = false; }
+
+  if (!ok) {
+    try { sessionStorage.clear(); } catch(e){}
+    // on renvoie vers le login avec retour sur app.html
+    const back = "app.html";
+    location.replace(LOGIN_URL + "?redirect=" + encodeURIComponent(back));
   }
 })();
 </script>
@@ -1002,6 +1007,14 @@ if(firestoreReady){
   onAuthStateChanged(auth2, (user)=>{ if(user){ ensureDocs().then(()=>{ startRealtime(); wireUI(); }); } else { useLocalFallback(); wireUI(); } });
 }else{ useLocalFallback(); wireUI(); }
 </script>
-
+<script>
+document.addEventListener('click', (e)=>{
+  const btn = e.target.closest('#loginBtnMask');
+  if (!btn) return;
+  const LOGIN_URL = "/support-dashboard/"; // ta page de login (index du dossier)
+  const back = "app.html";                 // où revenir après login
+  location.href = LOGIN_URL + "?redirect=" + encodeURIComponent(back);
+});
+</script>
 </body>
           </html>
