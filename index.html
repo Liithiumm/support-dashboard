@@ -79,10 +79,13 @@
   const loginBtn = document.getElementById('loginBtn');
   const setAdminSession = (on) => {
   try {
-    sessionStorage.setItem('is_admin', on ? '1' : '0');
-    sessionStorage.setItem('admin_ok', on ? '1' : '0'); // <- add this
+    // on n'utilise PLUS is_admin ni admin_ok
+    sessionStorage.setItem('is_admin_v2', on ? '1' : '0');
+    // on nettoie les anciennes clés pour éviter les surprises
+    sessionStorage.removeItem('is_admin');
+    sessionStorage.removeItem('admin_ok');
   } catch {}
-  window.__adminEmailOK = !!on;
+  window.__adminEmailOK = !!on; // optionnel
 };
   const goToApp = () => {
   const params = new URLSearchParams(location.search);
