@@ -592,9 +592,8 @@ let tickets = window.tickets;
 
 function computeStatus(tag, n){
   const x = Number(n) || 0;
-  if (x >= 7) return { text:'✅', cls:'ok' };     // bon
-  if (x === 0) return { text:'⚠️', cls:'low' };  // faible
-  return { text:'—', cls:'neutral' };            // neutre
+  if (x >= 7) return { text:'✅', cls:'ok' }; // bon
+  return { text:'⚠️', cls:'low' };           // en dessous de 7 → attention
 }
 
 function renderReadOnly(){
