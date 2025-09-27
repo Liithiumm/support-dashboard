@@ -3,13 +3,16 @@
 <head>
 <script>
 (function(){
-  const LOGIN_URL = "/support-dashboard/login.html"; 
+  const LOGIN_URL = "/support-dashboard/login.html"; // adapte si besoin
   try{
-    if(sessionStorage.getItem("admin_ok") !== "1"){
-      location.replace(LOGIN_URL + "?redirect=" + encodeURIComponent(location.href));
+    const ok = sessionStorage.getItem("is_admin") === "1" || sessionStorage.getItem("admin_ok") === "1";
+    if(!ok){
+      const here = location.pathname + location.search + location.hash;
+      location.replace(LOGIN_URL + "?redirect=" + encodeURIComponent(here));
     }
   }catch(e){
-    location.replace(LOGIN_URL + "?redirect=" + encodeURIComponent(location.href));
+    const here = location.pathname + location.search + location.hash;
+    location.replace(LOGIN_URL + "?redirect=" + encodeURIComponent(here));
   }
 })();
 </script>
