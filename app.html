@@ -457,7 +457,8 @@
       if (!f || !t){ if (outEl) outEl.value = "Renseigne bien lundi et dimanche"; return; }
       const after  = new Date(f.getTime() - 24*3600*1000);
       const before = new Date(t.getTime() + 24*3600*1000);
-      const cmd = `after:${fmt(after)} before:${fmt(before)}`;
+    const lang = (localStorage.getItem('ui_lang') || 'fr');
+    const cmd = `${lang === 'fr' ? 'après' : 'after'}:${fmt(after)} ${lang === 'fr' ? 'avant' : 'before'}:${fmt(before)}`;
       if (outEl) outEl.value = cmd;
       try{
         if (typeof updateWeekLabel === 'function'){
