@@ -477,18 +477,36 @@
     });
   }
 
-  // Toggle minimal pour le formulaire d’ajout
-  function wireAddMemberToggle(){
-    const addBtn    = document.getElementById('addBtn');
-    const addForm   = document.getElementById('addForm');
-    const cancelBtn = document.getElementById('cancelAddBtn');
-    addBtn?.addEventListener('click', ()=>{
-      if (addForm){ addForm.style.display = (addForm.style.display === 'none' || !addForm.style.display) ? 'block' : 'none'; }
-    });
-    cancelBtn?.addEventListener('click', ()=>{
-      if (addForm){ addForm.style.display = 'none'; }
-    });
-  }
+// Toggle minimal pour le formulaire d’ajout
+function wireAddMemberToggle(){
+  const addBtn    = document.getElementById('addBtn');
+  const addForm   = document.getElementById('addForm');
+  const cancelBtn = document.getElementById('cancelAddBtn');
+  const confirmBtn = document.getElementById('confirmAddBtn');
+
+  addBtn?.addEventListener('click', ()=>{
+    if (addForm){ addForm.style.display = (addForm.style.display === 'none' || !addForm.style.display) ? 'block' : 'none'; }
+  });
+  cancelBtn?.addEventListener('click', ()=>{
+    if (addForm){ addForm.style.display = 'none'; }
+  });
+
+  confirmBtn?.addEventListener('click', async ()=>{
+    if (document.body.classList.contains('locked')) return;
+    const tag   = (document.getElementById('addTag')?.value || '').trim();
+    const role  = (document.getElementById('addRole')?.value || 'Support').trim();
+    const langs = (document.getElementById('addLangs')?.value || '')
+      .split(',')
+      .map(s => s.trim().toUpperCase())
+      .filter(Boolean)
+      .join(', ');
+    if (!tag) return;
+    await window.addMemberFirestore(tag, role, langs);
+    document.getElementById('addTag').value = '';
+    document.getElementById('addLangs').value = '';
+    if (addForm) addForm.style.display = 'none';
+  });
+}
 
   // Branchements communs + backdrop (après que le DOM existe)
   function wireUIAlways(){
