@@ -368,7 +368,81 @@
       if (!btn) return;
       goToLoginWithRedirect("app.html");
     });
+<script>
+  // ... ton code existant ...
+  renderLinks();
 
+  // --- Onglets / Sheets: wiring léger et idempotent ---
+  (function(){
+    let wired = false;
+
+    function openSheet(id){
+      const sheet = document.getElementById(id);
+      const backdrop = document.getElementById('backdrop');
+      if (!sheet || !backdrop) return;
+      sheet.classList.add('open');
+      sheet.setAttribute('aria-hidden', 'false');
+      backdrop.classList.add('show');
+    }
+
+    function closeAllSheets(){
+      document.querySelectorAll('.sheet.open').forEach(s=>{
+        s.classList.remove('open');
+        s.setAttribute('aria-hidden', 'true');
+      });
+      document.getElementById('backdrop')?.classList.remove('show');
+    }
+
+    function wireTabsOnce(){
+      if (wired) return;
+      wired = true;
+
+      // Clic onglet => ouvre la sheet
+      document.addEventListener('click', (e)=>{
+        // Si UI verrouillée (pas admin), on ignore
+        if (document.body.classList.contains('locked')) return;
+
+        const tab = e.target.closest('.tab[data-sheet]');
+        if (tab){
+          const id = tab.getAttribute('data-sheet');
+          closeAllSheets();
+          openSheet(id);
+          return;
+        }
+
+        // Boutons de fermeture (✕ ou data-close)
+        const closeBtn = e.target.closest('[data-close-sheet],[data-close]');
+        if (closeBtn){
+          const sel = closeBtn.getAttribute('data-close') || closeBtn.getAttribute('data-close-sheet');
+          if (sel && document.querySelector(sel)) {
+            const el = document.querySelector(sel);
+            el.classList.remove('open');
+            el.setAttribute('aria-hidden', 'true');
+          } else {
+            closeAllSheets();
+          }
+        }
+      });
+
+      // Clic sur le backdrop => ferme
+      document.getElementById('backdrop')?.addEventListener('click', closeAllSheets);
+
+      // Échap => ferme
+      document.addEventListener('keydown', (e)=>{
+        if (e.key === 'Escape') closeAllSheets();
+      });
+    }
+
+    // Active immédiatement (lecture seule) puis côté admin via wireUI
+    wireTabsOnce();
+
+    const _oldWireUI = window.wireUI;
+    window.wireUI = function(){
+      try { _oldWireUI?.(); } catch {}
+      wireTabsOnce();
+    };
+  })();
+</script>
     // (Le reste de ton JS UI: i18n, members, tickets, export PNG… reste identique)
   </script>
 
