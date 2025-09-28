@@ -368,80 +368,140 @@
       if (!btn) return;
       goToLoginWithRedirect("app.html");
     });
-<script>
-  // ... ton code existant ...
-  renderLinks();
 
-  // --- Onglets / Sheets: wiring léger et idempotent ---
-  (function(){
-    let wired = false;
+    <script>
+  // ===== PATCH UI: délégation générique + boutons en mode non connecté =====
 
-    function openSheet(id){
-      const sheet = document.getElementById(id);
-      const backdrop = document.getElementById('backdrop');
-      if (!sheet || !backdrop) return;
-      sheet.classList.add('open');
-      sheet.setAttribute('aria-hidden', 'false');
-      backdrop.classList.add('show');
-    }
-
-    function closeAllSheets(){
-      document.querySelectorAll('.sheet.open').forEach(s=>{
+  // Helpers pour les sheets
+  function openSheet(sel){
+    try{
+      document.querySelectorAll('.sheet').forEach(s => {
         s.classList.remove('open');
-        s.setAttribute('aria-hidden', 'true');
+        s.setAttribute('aria-hidden','true');
       });
-      document.getElementById('backdrop')?.classList.remove('show');
+      const sh = document.querySelector(sel);
+      const bd = document.getElementById('backdrop');
+      if (sh){
+        sh.classList.add('open');
+        sh.setAttribute('aria-hidden','false');
+      }
+      if (bd){ bd.classList.add('show'); }
+    }catch{}
+  }
+  function closeSheets(){
+    try{
+      document.querySelectorAll('.sheet').forEach(s => {
+        s.classList.remove('open');
+        s.setAttribute('aria-hidden','true');
+      });
+      const bd = document.getElementById('backdrop');
+      if (bd){ bd.classList.remove('show'); }
+    }catch{}
+  }
+
+  // Délégation globale pour tabs et fermetures
+  document.addEventListener('click', (e)=>{
+    // Si UI verrouillée (pas admin), on bloque l’ouverture des sheets
+    if (document.body.classList.contains('locked')) return;
+
+    const tab = e.target.closest('.tab');
+    if (tab && tab.dataset.sheet){
+      e.preventDefault();
+      openSheet('#' + tab.dataset.sheet); // data-sheet="sheet-gen" -> "#sheet-gen"
+      return;
     }
-
-    function wireTabsOnce(){
-      if (wired) return;
-      wired = true;
-
-      // Clic onglet => ouvre la sheet
-      document.addEventListener('click', (e)=>{
-        // Si UI verrouillée (pas admin), on ignore
-        if (document.body.classList.contains('locked')) return;
-
-        const tab = e.target.closest('.tab[data-sheet]');
-        if (tab){
-          const id = tab.getAttribute('data-sheet');
-          closeAllSheets();
-          openSheet(id);
-          return;
-        }
-
-        // Boutons de fermeture (✕ ou data-close)
-        const closeBtn = e.target.closest('[data-close-sheet],[data-close]');
-        if (closeBtn){
-          const sel = closeBtn.getAttribute('data-close') || closeBtn.getAttribute('data-close-sheet');
-          if (sel && document.querySelector(sel)) {
-            const el = document.querySelector(sel);
-            el.classList.remove('open');
-            el.setAttribute('aria-hidden', 'true');
-          } else {
-            closeAllSheets();
-          }
-        }
-      });
-
-      // Clic sur le backdrop => ferme
-      document.getElementById('backdrop')?.addEventListener('click', closeAllSheets);
-
-      // Échap => ferme
-      document.addEventListener('keydown', (e)=>{
-        if (e.key === 'Escape') closeAllSheets();
-      });
+    if (e.target.closest('[data-close-sheet]')){
+      e.preventDefault();
+      closeSheets();
+      return;
     }
+    const btnClose = e.target.closest('[data-close]');
+    if (btnClose){
+      const sel = btnClose.getAttribute('data-close');
+      const el = document.querySelector(sel);
+      if (el){ el.style.display = 'none'; }
+      return;
+    }
+  });
 
-    // Active immédiatement (lecture seule) puis côté admin via wireUI
-    wireTabsOnce();
+  // Export PNG
+  function wireExportPng(){
+    const btn = document.getElementById('exportPngBtn');
+    if (!btn) return;
+    btn.addEventListener('click', async ()=>{
+      try{
+        const area = document.getElementById('captureArea');
+        if (!area){ return; }
+        const canvas = await html2canvas(area, { backgroundColor: null, scale: 2, useCORS: true });
+        const a = document.createElement('a');
+        a.download = 'support-week.png';
+        a.href = canvas.toDataURL('image/png');
+        a.click();
+      }catch{}
+    });
+  }
 
-    const _oldWireUI = window.wireUI;
-    window.wireUI = function(){
-      try { _oldWireUI?.(); } catch {}
-      wireTabsOnce();
-    };
-  })();
+  // Générateur
+  function wireGenerator(){
+    const genBtn  = document.getElementById('genBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const fromEl  = document.getElementById('dateFrom');
+    const toEl    = document.getElementById('dateTo');
+    const outEl   = document.getElementById('out');
+
+    function fmt(d){ return d.toISOString().slice(0,10); }
+    function parse(d){ const x = new Date(d + 'T12:00:00'); return isNaN(x) ? null : x; }
+
+    genBtn?.addEventListener('click', ()=>{
+      const f = parse(fromEl?.value||'');
+      const t = parse(toEl?.value||'');
+      if (!f || !t){ if (outEl) outEl.value = "Renseigne bien lundi et dimanche"; return; }
+      const after  = new Date(f.getTime() - 24*3600*1000);
+      const before = new Date(t.getTime() + 24*3600*1000);
+      const cmd = `after:${fmt(after)} before:${fmt(before)}`;
+      if (outEl) outEl.value = cmd;
+      try{
+        if (typeof updateWeekLabel === 'function'){
+          const lang=(localStorage.getItem('ui_lang')||'fr');
+          updateWeekLabel(lang, fmt(f), fmt(t));
+        }
+        if (typeof window.saveWeekFirestore === 'function'){
+          window.saveWeekFirestore(fmt(f), fmt(t));
+        }
+      }catch{}
+    });
+
+    copyBtn?.addEventListener('click', ()=>{
+      if (!outEl?.value) return;
+      navigator.clipboard?.writeText(outEl.value).catch(()=>{});
+    });
+  }
+
+  // Toggle minimal pour le formulaire d’ajout
+  function wireAddMemberToggle(){
+    const addBtn    = document.getElementById('addBtn');
+    const addForm   = document.getElementById('addForm');
+    const cancelBtn = document.getElementById('cancelAddBtn');
+    addBtn?.addEventListener('click', ()=>{
+      if (addForm){ addForm.style.display = (addForm.style.display === 'none' || !addForm.style.display) ? 'block' : 'none'; }
+    });
+    cancelBtn?.addEventListener('click', ()=>{
+      if (addForm){ addForm.style.display = 'none'; }
+    });
+  }
+
+  // Branchements communs + backdrop (après que le DOM existe)
+  function wireUIAlways(){
+    try{ wireExportPng(); }catch{}
+    try{ wireGenerator(); }catch{}
+    try{ wireAddMemberToggle(); }catch{}
+
+    const bd = document.getElementById('backdrop');
+    bd?.addEventListener('click', closeSheets);
+  }
+
+  // Lance dès que le DOM est prêt
+  document.addEventListener('DOMContentLoaded', wireUIAlways);
 </script>
     // (Le reste de ton JS UI: i18n, members, tickets, export PNG… reste identique)
   </script>
