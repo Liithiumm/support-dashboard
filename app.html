@@ -584,10 +584,48 @@ function wireAddMemberToggle(){
     }
 
     function startRealtime(){
-      onSnapshot(doc(db, "links", "config"), (snap)=>{ if(snap.exists()){ window.LINKS = snap.data()||{}; try{ renderLinks(); }catch{} } });
-      onSnapshot(collection(db, "members"), (qs)=>{ window.members = qs.docs.map(d=>({ id:d.id, ...d.data() })); try{ renderMembers(); renderReadOnly(); }catch{} });
-      onSnapshot(collection(db, "tickets"), (qs)=>{ const map={}; qs.forEach(d=> map[d.id]=(d.data()?.count)||0 ); window.tickets=map; try{ renderReadOnly(); }catch{} });
-      onSnapshot(doc(db, "ui", "state"), (snap)=>{ const lang=(localStorage.getItem('ui_lang')||'fr'); if(snap.exists()){ const {from,to}=snap.data(); window.supportWeek={from:from||null, to:to||null}; try{ updateWeekLabel(lang, from, to); }catch{} } });
+  try {
+    onSnapshot(
+      doc(db, "links", "config"),
+      (snap) => {
+        if (snap.exists()) { window.LINKS = snap.data() || {}; try{ renderLinks(); }catch{} }
+      },
+      (err) => alert("❌ links snapshot error: " + (err?.message || err))
+    );
+
+    onSnapshot(
+      collection(db, "members"),
+      (qs) => {
+        window.members = qs.docs.map(d => ({ id: d.id, ...d.data() }));
+        try { renderMembers(); renderReadOnly(); } catch {}
+      },
+      (err) => alert("❌ members snapshot error: " + (err?.message || err))
+    );
+
+    onSnapshot(
+      collection(db, "tickets"),
+      (qs) => {
+        const map = {}; qs.forEach(d => map[d.id] = (d.data()?.count) || 0);
+        window.tickets = map; try { renderReadOnly(); } catch {}
+      },
+      (err) => alert("❌ tickets snapshot error: " + (err?.message || err))
+    );
+
+    onSnapshot(
+      doc(db, "ui", "state"),
+      (snap) => {
+        const lang = (localStorage.getItem('ui_lang') || 'fr');
+        if (snap.exists()) {
+          const { from, to } = snap.data();
+          window.supportWeek = { from: from || null, to: to || null };
+          try { updateWeekLabel(lang, from, to); } catch {}
+        }
+      },
+      (err) => alert("❌ ui/state snapshot error: " + (err?.message || err))
+    );
+  } catch (e) {
+    alert("❌ startRealtime a échoué: " + (e?.message || e));
+  }
     }
 
     // Écritures
@@ -652,24 +690,35 @@ function wireAddMemberToggle(){
 
     // Auth flow
     onAuthStateChanged(auth, (user)=>{
-      if (user) {
-        // Débloque l’UI
-        try {
-          sessionStorage.setItem('is_admin_v2','1');
-          sessionStorage.setItem('is_admin','1');
-          sessionStorage.setItem('admin_ok','1');
-        } catch {}
-        document.documentElement.classList.remove('noadmin');
-        document.documentElement.classList.add('auth');
-        applyLockUI?.();
-        ensureDocs().then(()=>{ startRealtime(); wireUI(); });
-      } else {
-        // Pas connecté → fallback local (lecture LS) + masque
-        useLocalFallback();
-        applyLockUI?.();
-        // on propose le login
+  if (user) {
+    // Débloque l’UI
+    try {
+      sessionStorage.setItem('is_admin_v2','1');
+      sessionStorage.setItem('is_admin','1');
+      sessionStorage.setItem('admin_ok','1');
+    } catch {}
+    document.documentElement.classList.remove('noadmin');
+    document.documentElement.classList.add('auth');
+    applyLockUI?.();
+
+    (async () => {
+      try {
+        await ensureDocs();   // peut échouer (pas grave)
+      } catch (e) {
+        alert("⚠️ ensureDocs a échoué : " + (e?.message || e));
+      } finally {
+        startRealtime();      // ⬅️ démarre toujours la lecture Firestore
+        wireUI();
       }
-    });
+    })();
+
+  } else {
+    // Pas connecté → fallback local (lecture LS) + masque
+    useLocalFallback();
+    applyLockUI?.();
+    // on propose le login
+  }
+});
 
     // Logout bouton → redirection sûre
     document.getElementById('adminLogoutBtn')?.addEventListener('click', async ()=>{
