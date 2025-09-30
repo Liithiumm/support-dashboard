@@ -302,7 +302,6 @@
   <!-- i18n, UI & logique locale (inchangés sauf sanitizer & login mask click) -->
   <script>
     const I18N = { /* … dictionnaires FR/EN inchangés … */ };
-    // (par souci de place, je garde exactement ton contenu I18N et fonctions setLang/applyTranslations)
 
     // … (tes fonctions I18N / tabs / generator / export / members … inchangées) …
 
@@ -361,7 +360,34 @@
       });
     }
     renderLinks();
+// Bouton "Training"
+    <button id="openTraining" class="btn small">Training — Messages</button>
 
+// Ouvrir / fermer le sheet Training
+const trainingSheet = document.getElementById('sheet-training');
+
+function openTrainingSheet(){
+  if (!trainingSheet) return;
+  trainingSheet.setAttribute('aria-hidden', 'false');
+}
+
+function closeTrainingSheet(){
+  if (!trainingSheet) return;
+  trainingSheet.setAttribute('aria-hidden', 'true');
+}
+
+const openBtn = document.getElementById('openTraining');
+if (openBtn) openBtn.addEventListener('click', openTrainingSheet);
+
+// Bouton X déjà présent dans le sheet
+document.querySelectorAll('#sheet-training [data-close-sheet]').forEach(btn=>{
+  btn.addEventListener('click', closeTrainingSheet);
+});
+
+// Optionnel: fermer avec Échap
+document.addEventListener('keydown', (e)=>{
+  if (e.key === 'Escape') closeTrainingSheet();
+});
     // Bouton “Se connecter” du masque → redirection sûre
     document.addEventListener('click', (e)=>{
       const btn = e.target.closest('#loginBtnMask');
