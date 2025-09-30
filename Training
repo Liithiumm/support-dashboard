@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Training Messages Module</title>
+  <style>
+    .toast{position:fixed;right:14px;bottom:14px;background:rgba(10,20,34,.9);color:#eaf4ff;border:1px solid rgba(120,200,255,.35);padding:8px 12px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.45);opacity:0;transform:translateY(8px);transition:.2s;z-index:9999}
+    .toast.show{opacity:1;transform:translateY(0)}
+  </style>
+</head>
+<body>
+  <!-- ================= Training — Messages (sheet) ================= -->
+  <section id="sheet-training" class="sheet" aria-hidden="true">
+    <div class="sheet-inner">
+      <div class="handle"></div>
+      <button class="close-x btn gray small" type="button" data-close-sheet>✕</button>
+      <h2 style="margin:0 0 6px 0">Training — Messages</h2>
+
+      <div class="card" style="padding:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+        <label style="font-weight:700">Day:</label>
+        <select id="tmDay"></select>
+        <button id="tmAdd" class="btn small">+ Add message</button>
+      </div>
+
+      <div id="tmList" style="display:grid; gap:10px; margin-top:10px"></div>
+    </div>
+  </section>
+
+  <!-- Toast -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script type="module">
+    // ---------- Minimal toast helper ----------
+    function toast(msg){
+      const el = document.getElementById('toast');
+      if(!el) return;
+      el.textContent = msg;
+      el.classList.add('show');
+      setTimeout(()=>el.classList.remove('show'), 1200);
+    }
+
+    // ---------- Firebase (use existing app) ----------
+    import { getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
+    import {
+      getFirestore, collection, doc, addDoc, setDoc, getDocs, deleteDoc,
+      query, orderBy, serverTimestamp, writeBatch
+    } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
+
+    const app = getApps().length ? getApp() : null;
+    if(!app) {
+      console.error("[Training Messages] Firebase app not initialized on this page.");
+    }
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const selDay = document.getElementById('tmDay');
+    const btnAdd = document.getElementById('tmAdd');
+    const listEl = document.getElementById('tmList');
+
+    const DAY_IDS = ["day1","day2","day3","day4","day5","day6"];
+    let currentDay = "day1";
+    let currentDocs = [];
+
+    const dayMessagesCol = (dayId) => collection(db, `training_library/days/${dayId}/messages`);
+    const msgDoc = (dayId, id) => doc(db, `training_library/days/${dayId}/messages/${id}`);
+
+    async function fetchMessages(dayId){
+      const q = query(dayMessagesCol(dayId), orderBy('order', 'asc'));
+      const snap = await getDocs(q);
+      return snap.docs.map(d => ({ id: d.id, data: d.data() }));
+    }
+    async function addMessage(dayId, uid){
+      const ref = await addDoc(dayMessagesCol(dayId), {
+        text: "",
+        order: Date.now(),
+        updatedAt: serverTimestamp(),
+        updatedBy: uid || null
+      });
+      return ref.id;
+    }
+    async function saveMessage(dayId, id, text, uid){
+      await setDoc(msgDoc(dayId, id), {
+        text,
+        updatedAt: serverTimestamp(),
+        updatedBy: uid || null
+      }, { merge: true });
+    }
+    async function deleteMessage(dayId, id){
+      await deleteDoc(msgDoc(dayId, id));
+    }
+    async function swapOrder(dayId, a, b){
+      const batch = writeBatch(db);
+      batch.update(msgDoc(dayId, a.id), { order: b.data.order });
+      batch.update(msgDoc(dayId, b.id), { order: a.data.order });
+      await batch.commit();
+    }
+
+    function initDaySelect(){
+      selDay.innerHTML = "";
+      DAY_IDS.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d;
+        opt.textContent = d.replace('day','Day ');
+        selDay.appendChild(opt);
+      });
+      selDay.value = currentDay;
+      selDay.addEventListener('change', async () => {
+        currentDay = selDay.value;
+        await loadAndRender(currentDay);
+      });
+    }
+
+    function renderList(docs, {enterEditId} = {}){
+      listEl.innerHTML = "";
+      currentDocs = docs.slice();
+      if (docs.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = "card";
+        empty.style.padding = "12px";
+        empty.textContent = "No messages yet for this day.";
+        listEl.appendChild(empty);
+        return;
+      }
+      docs.forEach(({id, data}) => {
+        const card = document.createElement('div');
+        card.className = "card";
+        card.style.padding = "12px";
+        card.dataset.id = id;
+        card.innerHTML = \`
+          <div style="display:flex; justify-content:space-between; gap:8px; align-items:center;">
+            <div style="font-weight:700">Message</div>
+            <div class="actions" style="gap:6px; display:flex;">
+              <button class="btn small" data-copy>Copy</button>
+              <button class="btn gray small" data-edit>Edit</button>
+              <button class="btn gray small" data-save style="display:none">Save</button>
+              <button class="btn gray small" data-up>↑</button>
+              <button class="btn gray small" data-down>↓</button>
+              <button class="btn gray small" data-del>Del</button>
+            </div>
+          </div>
+          <textarea class="tmText" readonly style="margin-top:8px; min-height:100px"></textarea>
+        \`;
+        const ta = card.querySelector('.tmText');
+        ta.value = data?.text || "";
+        const btnCopy = card.querySelector('[data-copy]');
+        const btnEdit = card.querySelector('[data-edit]');
+        const btnSave = card.querySelector('[data-save]');
+        const btnUp   = card.querySelector('[data-up]');
+        const btnDown = card.querySelector('[data-down]');
+        const btnDel  = card.querySelector('[data-del]');
+        const enterEdit = () => {
+          ta.readOnly = false;
+          ta.focus();
+          const val = ta.value; ta.value = ""; ta.value = val;
+          btnSave.style.display = "";
+          btnEdit.style.display = "none";
+        };
+        const exitEdit = () => {
+          ta.readOnly = true;
+          btnSave.style.display = "none";
+          btnEdit.style.display = "";
+        };
+        btnCopy.addEventListener('click', async () => {
+          try { await navigator.clipboard.writeText(ta.value || ""); toast("Copied ✓"); }
+          catch (e) { toast("Error, please retry"); console.error(e); }
+        });
+        btnEdit.addEventListener('click', enterEdit);
+        btnSave.addEventListener('click', async () => {
+          try { const uid = auth?.currentUser?.uid || null;
+            await saveMessage(currentDay, id, ta.value, uid);
+            exitEdit(); toast("Saved ✓");
+          } catch(e){ toast("Error, please retry"); console.error(e); }
+        });
+        btnDel.addEventListener('click', async () => {
+          try { await deleteMessage(currentDay, id);
+            card.remove(); await loadAndRender(currentDay); toast("Deleted ✓");
+          } catch(e){ toast("Error, please retry"); console.error(e); }
+        });
+        btnUp.addEventListener('click', async () => {
+          try { const idx = currentDocs.findIndex(d => d.id === id);
+            if (idx > 0) { await swapOrder(currentDay, currentDocs[idx], currentDocs[idx-1]); await loadAndRender(currentDay); }
+          } catch(e){ toast("Error, please retry"); console.error(e); }
+        });
+        btnDown.addEventListener('click', async () => {
+          try { const idx = currentDocs.findIndex(d => d.id === id);
+            if (idx >= 0 && idx < currentDocs.length-1) { await swapOrder(currentDay, currentDocs[idx], currentDocs[idx+1]); await loadAndRender(currentDay); }
+          } catch(e){ toast("Error, please retry"); console.error(e); }
+        });
+        listEl.appendChild(card);
+        if (enterEditId && id === enterEditId) { enterEdit(); }
+      });
+    }
+
+    async function loadAndRender(dayId, opts){
+      const docs = await fetchMessages(dayId);
+      renderList(docs, opts);
+    }
+
+    btnAdd.addEventListener('click', async () => {
+      try { const uid = auth?.currentUser?.uid || null;
+        const newId = await addMessage(currentDay, uid);
+        await loadAndRender(currentDay, { enterEditId: newId }); toast("Added ✓");
+      } catch(e){ toast("Error, please retry"); console.error(e); }
+    });
+
+    initDaySelect();
+    onAuthStateChanged(auth, async () => {
+      try { await loadAndRender(currentDay); } catch(e){ console.error(e); toast("Error, please retry"); }
+    });
+  </script>
+</body>
+</html>
